@@ -1,0 +1,7 @@
+#source /home/COMMON/intel/bin/compilervars.sh intel64
+
+#find / -type d -name 'intel'
+
+#find / -name 'libiomp5.so'
+#g++ -fopenmp -Wall -otarget/main-`uname -m` main.cpp
+#error while loading shared libraries: libiomp5.so: cannot open shared object file: No such file or directory
