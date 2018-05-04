@@ -20,7 +20,8 @@
 
 #include <stdlib.h>
 
-#include "curl/curl.h"
+#include "util/Everest.cpp"
+//#include "curl/curl.h"
 //#include "json.hpp"
 
 using namespace std;
