@@ -1,22 +1,33 @@
 {
-    // Используйте IntelliSense, чтобы узнать о возможных атрибутах.
-    // Наведите указатель мыши, чтобы просмотреть описания существующих атрибутов.
-    // Для получения дополнительной информации посетите: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "(gdb) Launch",
+            //for tests
+            "type": "gdb",
+            "request": "launch",
+            "name": "Launch Program",
+            "target": "./build/blocksort",
+            "cwd": "${workspaceRoot}",
+            "preLaunchTask": "run"
+        },
+        {
+            "name": "C++ Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "D:/work/ssau/diploma/DistributedBlockSort/blocksort.exe",
+            "program": "${workspaceFolder}/build/blocksort",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": true,
-            "MIMode": "gdb",
-            "miDebuggerPath": "C:/Program Files/mingw-w64/x86_64-7.3.0-posix-seh-rt_v5-rev0/mingw64/bin/gdb.exe",
             "preLaunchTask": "run",
+            "environment": 
+            [
+                {
+                    "name": "LD_LIBRARY_PATH",
+                    "value": "/opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64_lin/"
+                }
+            ],
+            "externalConsole": true,
+            "showDisplayString": true,
             "setupCommands": [
                 {
                     "description": "Enable pretty-printing for gdb",
