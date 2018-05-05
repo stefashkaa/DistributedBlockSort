@@ -20,7 +20,7 @@
 
 #include <stdlib.h>
 
-#include "util/Everest.cpp"
+#include "Everest.cpp"
 //#include "curl/curl.h"
 //#include "json.hpp"
 
@@ -48,6 +48,8 @@ const int BLOCK_SIZE = 64000000;
 // 7
 //const int NUM_BLOCKS = 128;
 //const int BLOCK_SIZE = 1000000;
+
+Everest *everestAPI;
 
 int block_array[NUM_BLOCKS*BLOCK_SIZE];
 
@@ -212,6 +214,7 @@ struct everest : actor_interface {
 		//curl = NULL;
 		//curl_slist_free_all(slist);
 		//slist = NULL;
+		//everestAPI->removeAccessToken();
 		std::cout << "\n everest clean-up \n";
 	}
 
@@ -407,6 +410,9 @@ int main(int argc, char *argv[])
 
 	system("uname -a");
 
+	everestAPI = new Everest();
+	cout << everestAPI->getAccessToken("stefanpopov", "qwaszx1", "test") << endl;
+
 	std::cout << "\nNUM_BLOCKS = " << NUM_BLOCKS << endl
 		<< "BLOCK_SIZE = " << BLOCK_SIZE << endl
 		<< "OMP_NUM_PROCS = " << omp_get_num_procs() << endl;
@@ -471,7 +477,7 @@ int main(int argc, char *argv[])
 
 	if (!is_sorted())std::cout << "\nSomething went wrong in the parallel actor block-sort!!!\n";
 	else std::cout << "\nParallel block-sort time is " << time << " sec\n";
-
+	system("pause");
 	return 0;
 
 	/*$TET$*/

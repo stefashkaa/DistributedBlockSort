@@ -1,7 +1,7 @@
 #ifndef EVERESTAPI_CONNECTOR_CPP
 #define EVERESTAPI_CONNECTOR_CPP
 
-#include "../curl/curl.h"
+#include "curl/curl.h"
 #include "iostream"
 
 using namespace std;
@@ -76,16 +76,16 @@ public:
         if (!curl)
             throw runtime_error("curl crushed");
         Response newResponse;
-        curl_mime *form = curl_mime_init(curl);
-        curl_mimepart *field = curl_mime_addpart(form);
-        curl_mime_name(field, "file");
-        curl_mime_filedata(field, filepath.c_str());
+        //curl_mime *form = curl_mime_init(curl);
+        //curl_mimepart *field = curl_mime_addpart(form);
+        //curl_mime_name(field, "file");
+        //curl_mime_filedata(field, filepath.c_str());
         struct curl_slist *headers = NULL;
         headers = curl_slist_append(headers, "Expect:");
         //headers = curl_slist_append(headers, "Content-Type: application/octet-stream");
         curl_easy_setopt(curl, CURLOPT_URL, URL.c_str());
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-        curl_easy_setopt(curl, CURLOPT_MIMEPOST, form);
+        //curl_easy_setopt(curl, CURLOPT_MIMEPOST, form);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &newResponse.response);
         curl_easy_perform(curl);
