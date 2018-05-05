@@ -21,11 +21,8 @@
 #include <stdlib.h>
 
 #include "Everest.cpp"
-//#include "curl/curl.h"
-//#include "json.hpp"
 
 using namespace std;
-//using namespace json;
 
 // 1
 const int NUM_BLOCKS = 2;
@@ -210,11 +207,7 @@ struct everest : actor_interface {
 
 	/*$TET$everest$$code&data*/
 	~everest() {
-		//removeToken(curl, slist);
-		//curl = NULL;
-		//curl_slist_free_all(slist);
-		//slist = NULL;
-		//everestAPI->removeAccessToken();
+		everestAPI->removeAccessToken();
 		std::cout << "\n everest clean-up \n";
 	}
 
@@ -247,7 +240,7 @@ struct timer : actor_interface {
 		struct timespec ts;
 		ts.tv_sec = milliseconds / 1000;
 		ts.tv_nsec = (milliseconds % 1000) * 1000000;
-		//nanosleep(&ts, NULL);
+		nanosleep(&ts, NULL);
 		p.send();
 		/*$TET$*/
 	}
@@ -411,7 +404,7 @@ int main(int argc, char *argv[])
 	system("uname -a");
 
 	everestAPI = new Everest();
-	cout << everestAPI->getAccessToken("stefanpopov", "qwaszx1", "test") << endl;
+	cout << "Access token: " << everestAPI->getAccessToken("stefanpopov", "qwaszx1", "blocksort") << endl;
 
 	std::cout << "\nNUM_BLOCKS = " << NUM_BLOCKS << endl
 		<< "BLOCK_SIZE = " << BLOCK_SIZE << endl
