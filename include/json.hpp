@@ -49,7 +49,7 @@ SOFTWARE.
 #ifndef NLOHMANN_JSON_FWD_HPP
 #define NLOHMANN_JSON_FWD_HPP
 
-#include <cstdint> // int64_t, uint64_t
+//#include <cstdint> // long long, unsigned long long
 #include <map> // map
 #include <memory> // allocator
 #include <string> // string
@@ -76,8 +76,8 @@ template<template<typename U, typename V, typename... Args> class ObjectType =
          std::map,
          template<typename U, typename... Args> class ArrayType = std::vector,
          class StringType = std::string, class BooleanType = bool,
-         class NumberIntegerType = std::int64_t,
-         class NumberUnsignedType = std::uint64_t,
+         class NumberIntegerType = int,
+         class NumberUnsignedType = unsigned int,
          class NumberFloatType = double,
          template<typename U> class AllocatorType = std::allocator,
          template<typename T, typename SFINAE = void> class JSONSerializer =
@@ -828,7 +828,7 @@ class other_error : public exception
 #include <array> // array
 #include <ciso646> // and
 #include <cstddef> // size_t
-#include <cstdint> // uint8_t
+//#include <cstdint> // unsigned short
 
 namespace nlohmann
 {
@@ -862,7 +862,7 @@ value with the default value for a given type
 
 @since version 1.0.0
 */
-enum class value_t : std::uint8_t
+enum class value_t : std::unsigned short
 {
     null,             ///< null value
     object,           ///< object (unordered set of name/value pairs)
@@ -887,7 +887,7 @@ Returns an ordering that is similar to Python:
 */
 inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 {
-    static constexpr std::array<std::uint8_t, 8> order = {{
+    static constexpr std::array<std::unsigned short, 8> order = {{
             0 /* null */, 3 /* object */, 4 /* array */, 5 /* string */,
             1 /* boolean */, 2 /* integer */, 2 /* unsigned */, 2 /* float */
         }
@@ -3121,7 +3121,7 @@ scan_number_done:
 
 #include <cassert> // assert
 #include <cmath> // isfinite
-#include <cstdint> // uint8_t
+//#include <cstdint> // unsigned short
 #include <functional> // function
 #include <string> // string
 #include <utility> // move
@@ -3161,7 +3161,7 @@ class parser
     using token_type = typename lexer_t::token_type;
 
   public:
-    enum class parse_event_t : uint8_t
+    enum class parse_event_t : unsigned short
     {
         /// the parser read `{` and started to process a JSON object
         object_start,
@@ -4831,7 +4831,7 @@ class output_adapter
 #include <cassert> // assert
 #include <cmath> // ldexp
 #include <cstddef> // size_t
-#include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t
+//#include <cstdint> // unsigned short, unsigned int, unsigned long, unsigned long long
 #include <cstring> // memcpy
 #include <iomanip> // setw, setfill
 #include <ios> // hex
@@ -4995,17 +4995,17 @@ class binary_reader
             case 0x17:
                 return static_cast<number_unsigned_t>(current);
 
-            case 0x18: // Unsigned integer (one-byte uint8_t follows)
-                return get_number<uint8_t>();
+            case 0x18: // Unsigned integer (one-byte unsigned short follows)
+                return get_number<unsigned short>();
 
-            case 0x19: // Unsigned integer (two-byte uint16_t follows)
-                return get_number<uint16_t>();
+            case 0x19: // Unsigned integer (two-byte unsigned int follows)
+                return get_number<unsigned int>();
 
-            case 0x1A: // Unsigned integer (four-byte uint32_t follows)
-                return get_number<uint32_t>();
+            case 0x1A: // Unsigned integer (four-byte unsigned long follows)
+                return get_number<unsigned long>();
 
-            case 0x1B: // Unsigned integer (eight-byte uint64_t follows)
-                return get_number<uint64_t>();
+            case 0x1B: // Unsigned integer (eight-byte unsigned long long follows)
+                return get_number<unsigned int>();
 
             // Negative integer -1-0x00..-1-0x17 (-1..-24)
             case 0x20:
@@ -5032,27 +5032,27 @@ class binary_reader
             case 0x35:
             case 0x36:
             case 0x37:
-                return static_cast<int8_t>(0x20 - 1 - current);
+                return static_cast<short>(0x20 - 1 - current);
 
-            case 0x38: // Negative integer (one-byte uint8_t follows)
+            case 0x38: // Negative integer (one-byte unsigned short follows)
             {
-                return static_cast<number_integer_t>(-1) - get_number<uint8_t>();
+                return static_cast<number_integer_t>(-1) - get_number<unsigned short>();
             }
 
-            case 0x39: // Negative integer -1-n (two-byte uint16_t follows)
+            case 0x39: // Negative integer -1-n (two-byte unsigned int follows)
             {
-                return static_cast<number_integer_t>(-1) - get_number<uint16_t>();
+                return static_cast<number_integer_t>(-1) - get_number<unsigned short>();
             }
 
-            case 0x3A: // Negative integer -1-n (four-byte uint32_t follows)
+            case 0x3A: // Negative integer -1-n (four-byte unsigned long follows)
             {
-                return static_cast<number_integer_t>(-1) - get_number<uint32_t>();
+                return static_cast<number_integer_t>(-1) - get_number<unsigned int>();
             }
 
-            case 0x3B: // Negative integer -1-n (eight-byte uint64_t follows)
+            case 0x3B: // Negative integer -1-n (eight-byte unsigned long long follows)
             {
                 return static_cast<number_integer_t>(-1) -
-                       static_cast<number_integer_t>(get_number<uint64_t>());
+                       static_cast<number_integer_t>(get_number<unsigned long>());
             }
 
             // UTF-8 string (0x00..0x17 bytes follow)
@@ -5080,10 +5080,10 @@ class binary_reader
             case 0x75:
             case 0x76:
             case 0x77:
-            case 0x78: // UTF-8 string (one-byte uint8_t for n follows)
-            case 0x79: // UTF-8 string (two-byte uint16_t for n follow)
-            case 0x7A: // UTF-8 string (four-byte uint32_t for n follow)
-            case 0x7B: // UTF-8 string (eight-byte uint64_t for n follow)
+            case 0x78: // UTF-8 string (one-byte unsigned short for n follows)
+            case 0x79: // UTF-8 string (two-byte unsigned int for n follow)
+            case 0x7A: // UTF-8 string (four-byte unsigned long for n follow)
+            case 0x7B: // UTF-8 string (eight-byte unsigned long long for n follow)
             case 0x7F: // UTF-8 string (indefinite length)
             {
                 return get_cbor_string();
@@ -5118,24 +5118,24 @@ class binary_reader
                 return get_cbor_array(current & 0x1F);
             }
 
-            case 0x98: // array (one-byte uint8_t for n follows)
+            case 0x98: // array (one-byte unsigned short for n follows)
             {
-                return get_cbor_array(get_number<uint8_t>());
+                return get_cbor_array(get_number<unsigned short>());
             }
 
-            case 0x99: // array (two-byte uint16_t for n follow)
+            case 0x99: // array (two-byte unsigned int for n follow)
             {
-                return get_cbor_array(get_number<uint16_t>());
+                return get_cbor_array(get_number<unsigned int>());
             }
 
-            case 0x9A: // array (four-byte uint32_t for n follow)
+            case 0x9A: // array (four-byte unsigned long for n follow)
             {
-                return get_cbor_array(get_number<uint32_t>());
+                return get_cbor_array(get_number<unsigned long>());
             }
 
-            case 0x9B: // array (eight-byte uint64_t for n follow)
+            case 0x9B: // array (eight-byte unsigned long long for n follow)
             {
-                return get_cbor_array(get_number<uint64_t>());
+                return get_cbor_array(get_number<unsigned long>());
             }
 
             case 0x9F: // array (indefinite length)
@@ -5177,24 +5177,24 @@ class binary_reader
                 return get_cbor_object(current & 0x1F);
             }
 
-            case 0xB8: // map (one-byte uint8_t for n follows)
+            case 0xB8: // map (one-byte unsigned short for n follows)
             {
-                return get_cbor_object(get_number<uint8_t>());
+                return get_cbor_object(get_number<unsigned short>());
             }
 
-            case 0xB9: // map (two-byte uint16_t for n follow)
+            case 0xB9: // map (two-byte unsigned int for n follow)
             {
-                return get_cbor_object(get_number<uint16_t>());
+                return get_cbor_object(get_number<unsigned int>());
             }
 
-            case 0xBA: // map (four-byte uint32_t for n follow)
+            case 0xBA: // map (four-byte unsigned long for n follow)
             {
-                return get_cbor_object(get_number<uint32_t>());
+                return get_cbor_object(get_number<unsigned long>());
             }
 
-            case 0xBB: // map (eight-byte uint64_t for n follow)
+            case 0xBB: // map (eight-byte unsigned long long for n follow)
             {
-                return get_cbor_object(get_number<uint64_t>());
+                return get_cbor_object(get_number<unsigned long>());
             }
 
             case 0xBF: // map (indefinite length)
@@ -5509,28 +5509,28 @@ class binary_reader
                 return get_number<double>();
 
             case 0xCC: // uint 8
-                return get_number<uint8_t>();
+                return get_number<unsigned short>();
 
             case 0xCD: // uint 16
-                return get_number<uint16_t>();
+                return get_number<unsigned int>();
 
             case 0xCE: // uint 32
-                return get_number<uint32_t>();
+                return get_number<unsigned long>();
 
             case 0xCF: // uint 64
-                return get_number<uint64_t>();
+                return get_number<unsigned long long>();
 
             case 0xD0: // int 8
-                return get_number<int8_t>();
+                return get_number<short>();
 
             case 0xD1: // int 16
-                return get_number<int16_t>();
+                return get_number<int>();
 
             case 0xD2: // int 32
-                return get_number<int32_t>();
+                return get_number<long>();
 
             case 0xD3: // int 64
-                return get_number<int64_t>();
+                return get_number<long long>();
 
             case 0xD9: // str 8
             case 0xDA: // str 16
@@ -5539,22 +5539,22 @@ class binary_reader
 
             case 0xDC: // array 16
             {
-                return get_msgpack_array(get_number<uint16_t>());
+                return get_msgpack_array(get_number<unsigned int>());
             }
 
             case 0xDD: // array 32
             {
-                return get_msgpack_array(get_number<uint32_t>());
+                return get_msgpack_array(get_number<unsigned long>());
             }
 
             case 0xDE: // map 16
             {
-                return get_msgpack_object(get_number<uint16_t>());
+                return get_msgpack_object(get_number<unsigned int>());
             }
 
             case 0xDF: // map 32
             {
-                return get_msgpack_object(get_number<uint32_t>());
+                return get_msgpack_object(get_number<unsigned long>());
             }
 
             // positive fixint
@@ -5590,7 +5590,7 @@ class binary_reader
             case 0xFD:
             case 0xFE:
             case 0xFF:
-                return static_cast<int8_t>(current);
+                return static_cast<short>(current);
 
             default: // anything else
             {
@@ -5657,7 +5657,7 @@ class binary_reader
     template<typename NumberType> NumberType get_number()
     {
         // step 1: read input into array with system's byte order
-        std::array<uint8_t, sizeof(NumberType)> vec;
+        std::array<unsigned short, sizeof(NumberType)> vec;
         for (std::size_t i = 0; i < sizeof(NumberType); ++i)
         {
             get();
@@ -5666,11 +5666,11 @@ class binary_reader
             // reverse byte order prior to conversion if necessary
             if (is_little_endian)
             {
-                vec[sizeof(NumberType) - i - 1] = static_cast<uint8_t>(current);
+                vec[sizeof(NumberType) - i - 1] = static_cast<unsigned short>(current);
             }
             else
             {
-                vec[i] = static_cast<uint8_t>(current); // LCOV_EXCL_LINE
+                vec[i] = static_cast<unsigned short>(current); // LCOV_EXCL_LINE
             }
         }
 
@@ -5753,24 +5753,24 @@ class binary_reader
                 return get_string(current & 0x1F);
             }
 
-            case 0x78: // UTF-8 string (one-byte uint8_t for n follows)
+            case 0x78: // UTF-8 string (one-byte unsigned short for n follows)
             {
-                return get_string(get_number<uint8_t>());
+                return get_string(get_number<unsigned short>());
             }
 
-            case 0x79: // UTF-8 string (two-byte uint16_t for n follow)
+            case 0x79: // UTF-8 string (two-byte unsigned int for n follow)
             {
-                return get_string(get_number<uint16_t>());
+                return get_string(get_number<unsigned int>());
             }
 
-            case 0x7A: // UTF-8 string (four-byte uint32_t for n follow)
+            case 0x7A: // UTF-8 string (four-byte unsigned long for n follow)
             {
-                return get_string(get_number<uint32_t>());
+                return get_string(get_number<unsigned long>());
             }
 
-            case 0x7B: // UTF-8 string (eight-byte uint64_t for n follow)
+            case 0x7B: // UTF-8 string (eight-byte unsigned long long for n follow)
             {
-                return get_string(get_number<uint64_t>());
+                return get_string(get_number<unsigned long long>());
             }
 
             case 0x7F: // UTF-8 string (indefinite length)
@@ -5875,17 +5875,17 @@ class binary_reader
 
             case 0xD9: // str 8
             {
-                return get_string(get_number<uint8_t>());
+                return get_string(get_number<unsigned short>());
             }
 
             case 0xDA: // str 16
             {
-                return get_string(get_number<uint16_t>());
+                return get_string(get_number<unsigned int>());
             }
 
             case 0xDB: // str 32
             {
-                return get_string(get_number<uint32_t>());
+                return get_string(get_number<unsigned long>());
             }
 
             default:
@@ -5953,15 +5953,15 @@ class binary_reader
         switch (current)
         {
             case 'U':
-                return get_string(get_number<uint8_t>());
+                return get_string(get_number<unsigned short>());
             case 'i':
-                return get_string(get_number<int8_t>());
+                return get_string(get_number<short>());
             case 'I':
-                return get_string(get_number<int16_t>());
+                return get_string(get_number<int>());
             case 'l':
-                return get_string(get_number<int32_t>());
+                return get_string(get_number<long>());
             case 'L':
-                return get_string(get_number<int64_t>());
+                return get_string(get_number<long long>());
             default:
                 std::stringstream ss;
                 ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << current;
@@ -6024,15 +6024,15 @@ class binary_reader
                 return nullptr;
 
             case 'U':
-                return get_number<uint8_t>();
+                return get_number<unsigned short>();
             case 'i':
-                return get_number<int8_t>();
+                return get_number<short>();
             case 'I':
-                return get_number<int16_t>();
+                return get_number<int>();
             case 'l':
-                return get_number<int32_t>();
+                return get_number<long>();
             case 'L':
-                return get_number<int64_t>();
+                return get_number<long long>();
             case 'd':
                 return get_number<float>();
             case 'D':
@@ -6208,7 +6208,7 @@ class binary_reader
 
 #include <algorithm> // reverse
 #include <array> // array
-#include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t
+//#include <cstdint> // unsigned short, unsigned int, unsigned long, unsigned long long
 #include <cstring> // memcpy
 #include <limits> // numeric_limits
 
@@ -6272,27 +6272,27 @@ class binary_writer
                     // code from the value_t::number_unsigned case here.
                     if (j.m_value.number_integer <= 0x17)
                     {
-                        write_number(static_cast<uint8_t>(j.m_value.number_integer));
+                        write_number(static_cast<unsigned short>(j.m_value.number_integer));
                     }
-                    else if (j.m_value.number_integer <= (std::numeric_limits<uint8_t>::max)())
+                    else if (j.m_value.number_integer <= (std::numeric_limits<unsigned short>::max)())
                     {
                         oa->write_character(static_cast<CharType>(0x18));
-                        write_number(static_cast<uint8_t>(j.m_value.number_integer));
+                        write_number(static_cast<unsigned short>(j.m_value.number_integer));
                     }
-                    else if (j.m_value.number_integer <= (std::numeric_limits<uint16_t>::max)())
+                    else if (j.m_value.number_integer <= (std::numeric_limits<unsigned int>::max)())
                     {
                         oa->write_character(static_cast<CharType>(0x19));
-                        write_number(static_cast<uint16_t>(j.m_value.number_integer));
+                        write_number(static_cast<unsigned int>(j.m_value.number_integer));
                     }
-                    else if (j.m_value.number_integer <= (std::numeric_limits<uint32_t>::max)())
+                    else if (j.m_value.number_integer <= (std::numeric_limits<unsigned long>::max)())
                     {
                         oa->write_character(static_cast<CharType>(0x1A));
-                        write_number(static_cast<uint32_t>(j.m_value.number_integer));
+                        write_number(static_cast<unsigned long>(j.m_value.number_integer));
                     }
                     else
                     {
                         oa->write_character(static_cast<CharType>(0x1B));
-                        write_number(static_cast<uint64_t>(j.m_value.number_integer));
+                        write_number(static_cast<unsigned long long>(j.m_value.number_integer));
                     }
                 }
                 else
@@ -6302,27 +6302,27 @@ class binary_writer
                     const auto positive_number = -1 - j.m_value.number_integer;
                     if (j.m_value.number_integer >= -24)
                     {
-                        write_number(static_cast<uint8_t>(0x20 + positive_number));
+                        write_number(static_cast<unsigned short>(0x20 + positive_number));
                     }
-                    else if (positive_number <= (std::numeric_limits<uint8_t>::max)())
+                    else if (positive_number <= (std::numeric_limits<unsigned short>::max)())
                     {
                         oa->write_character(static_cast<CharType>(0x38));
-                        write_number(static_cast<uint8_t>(positive_number));
+                        write_number(static_cast<unsigned short>(positive_number));
                     }
-                    else if (positive_number <= (std::numeric_limits<uint16_t>::max)())
+                    else if (positive_number <= (std::numeric_limits<unsigned int>::max)())
                     {
                         oa->write_character(static_cast<CharType>(0x39));
-                        write_number(static_cast<uint16_t>(positive_number));
+                        write_number(static_cast<unsigned int>(positive_number));
                     }
-                    else if (positive_number <= (std::numeric_limits<uint32_t>::max)())
+                    else if (positive_number <= (std::numeric_limits<unsigned long>::max)())
                     {
                         oa->write_character(static_cast<CharType>(0x3A));
-                        write_number(static_cast<uint32_t>(positive_number));
+                        write_number(static_cast<unsigned long>(positive_number));
                     }
                     else
                     {
                         oa->write_character(static_cast<CharType>(0x3B));
-                        write_number(static_cast<uint64_t>(positive_number));
+                        write_number(static_cast<unsigned long long>(positive_number));
                     }
                 }
                 break;
@@ -6332,27 +6332,27 @@ class binary_writer
             {
                 if (j.m_value.number_unsigned <= 0x17)
                 {
-                    write_number(static_cast<uint8_t>(j.m_value.number_unsigned));
+                    write_number(static_cast<unsigned short>(j.m_value.number_unsigned));
                 }
-                else if (j.m_value.number_unsigned <= (std::numeric_limits<uint8_t>::max)())
+                else if (j.m_value.number_unsigned <= (std::numeric_limits<unsigned short>::max)())
                 {
                     oa->write_character(static_cast<CharType>(0x18));
-                    write_number(static_cast<uint8_t>(j.m_value.number_unsigned));
+                    write_number(static_cast<unsigned short>(j.m_value.number_unsigned));
                 }
-                else if (j.m_value.number_unsigned <= (std::numeric_limits<uint16_t>::max)())
+                else if (j.m_value.number_unsigned <= (std::numeric_limits<unsigned int>::max)())
                 {
                     oa->write_character(static_cast<CharType>(0x19));
-                    write_number(static_cast<uint16_t>(j.m_value.number_unsigned));
+                    write_number(static_cast<unsigned int>(j.m_value.number_unsigned));
                 }
-                else if (j.m_value.number_unsigned <= (std::numeric_limits<uint32_t>::max)())
+                else if (j.m_value.number_unsigned <= (std::numeric_limits<unsigned long>::max)())
                 {
                     oa->write_character(static_cast<CharType>(0x1A));
-                    write_number(static_cast<uint32_t>(j.m_value.number_unsigned));
+                    write_number(static_cast<unsigned long>(j.m_value.number_unsigned));
                 }
                 else
                 {
                     oa->write_character(static_cast<CharType>(0x1B));
-                    write_number(static_cast<uint64_t>(j.m_value.number_unsigned));
+                    write_number(static_cast<unsigned long long>(j.m_value.number_unsigned));
                 }
                 break;
             }
@@ -6370,28 +6370,28 @@ class binary_writer
                 const auto N = j.m_value.string->size();
                 if (N <= 0x17)
                 {
-                    write_number(static_cast<uint8_t>(0x60 + N));
+                    write_number(static_cast<unsigned short>(0x60 + N));
                 }
-                else if (N <= (std::numeric_limits<uint8_t>::max)())
+                else if (N <= (std::numeric_limits<unsigned short>::max)())
                 {
                     oa->write_character(static_cast<CharType>(0x78));
-                    write_number(static_cast<uint8_t>(N));
+                    write_number(static_cast<unsigned short>(N));
                 }
-                else if (N <= (std::numeric_limits<uint16_t>::max)())
+                else if (N <= (std::numeric_limits<unsigned int>::max)())
                 {
                     oa->write_character(static_cast<CharType>(0x79));
-                    write_number(static_cast<uint16_t>(N));
+                    write_number(static_cast<unsigned int>(N));
                 }
-                else if (N <= (std::numeric_limits<uint32_t>::max)())
+                else if (N <= (std::numeric_limits<unsigned long>::max)())
                 {
                     oa->write_character(static_cast<CharType>(0x7A));
-                    write_number(static_cast<uint32_t>(N));
+                    write_number(static_cast<unsigned long>(N));
                 }
                 // LCOV_EXCL_START
-                else if (N <= (std::numeric_limits<uint64_t>::max)())
+                else if (N <= (std::numeric_limits<unsigned long long>::max)())
                 {
                     oa->write_character(static_cast<CharType>(0x7B));
-                    write_number(static_cast<uint64_t>(N));
+                    write_number(static_cast<unsigned long long>(N));
                 }
                 // LCOV_EXCL_STOP
 
@@ -6408,28 +6408,28 @@ class binary_writer
                 const auto N = j.m_value.array->size();
                 if (N <= 0x17)
                 {
-                    write_number(static_cast<uint8_t>(0x80 + N));
+                    write_number(static_cast<unsigned short>(0x80 + N));
                 }
-                else if (N <= (std::numeric_limits<uint8_t>::max)())
+                else if (N <= (std::numeric_limits<unsigned short>::max)())
                 {
                     oa->write_character(static_cast<CharType>(0x98));
-                    write_number(static_cast<uint8_t>(N));
+                    write_number(static_cast<unsigned short>(N));
                 }
-                else if (N <= (std::numeric_limits<uint16_t>::max)())
+                else if (N <= (std::numeric_limits<unsigned int>::max)())
                 {
                     oa->write_character(static_cast<CharType>(0x99));
-                    write_number(static_cast<uint16_t>(N));
+                    write_number(static_cast<unsigned int>(N));
                 }
-                else if (N <= (std::numeric_limits<uint32_t>::max)())
+                else if (N <= (std::numeric_limits<unsigned long>::max)())
                 {
                     oa->write_character(static_cast<CharType>(0x9A));
-                    write_number(static_cast<uint32_t>(N));
+                    write_number(static_cast<unsigned long>(N));
                 }
                 // LCOV_EXCL_START
-                else if (N <= (std::numeric_limits<uint64_t>::max)())
+                else if (N <= (std::numeric_limits<unsigned long long>::max)())
                 {
                     oa->write_character(static_cast<CharType>(0x9B));
-                    write_number(static_cast<uint64_t>(N));
+                    write_number(static_cast<unsigned long long>(N));
                 }
                 // LCOV_EXCL_STOP
 
@@ -6447,28 +6447,28 @@ class binary_writer
                 const auto N = j.m_value.object->size();
                 if (N <= 0x17)
                 {
-                    write_number(static_cast<uint8_t>(0xA0 + N));
+                    write_number(static_cast<unsigned short>(0xA0 + N));
                 }
-                else if (N <= (std::numeric_limits<uint8_t>::max)())
+                else if (N <= (std::numeric_limits<unsigned short>::max)())
                 {
                     oa->write_character(static_cast<CharType>(0xB8));
-                    write_number(static_cast<uint8_t>(N));
+                    write_number(static_cast<unsigned short>(N));
                 }
-                else if (N <= (std::numeric_limits<uint16_t>::max)())
+                else if (N <= (std::numeric_limits<unsigned int>::max)())
                 {
                     oa->write_character(static_cast<CharType>(0xB9));
-                    write_number(static_cast<uint16_t>(N));
+                    write_number(static_cast<unsigned int>(N));
                 }
-                else if (N <= (std::numeric_limits<uint32_t>::max)())
+                else if (N <= (std::numeric_limits<unsigned long>::max)())
                 {
                     oa->write_character(static_cast<CharType>(0xBA));
-                    write_number(static_cast<uint32_t>(N));
+                    write_number(static_cast<unsigned long>(N));
                 }
                 // LCOV_EXCL_START
-                else if (N <= (std::numeric_limits<uint64_t>::max)())
+                else if (N <= (std::numeric_limits<unsigned long long>::max)())
                 {
                     oa->write_character(static_cast<CharType>(0xBB));
-                    write_number(static_cast<uint64_t>(N));
+                    write_number(static_cast<unsigned long long>(N));
                 }
                 // LCOV_EXCL_STOP
 
@@ -6517,31 +6517,31 @@ class binary_writer
                     if (j.m_value.number_unsigned < 128)
                     {
                         // positive fixnum
-                        write_number(static_cast<uint8_t>(j.m_value.number_integer));
+                        write_number(static_cast<unsigned short>(j.m_value.number_integer));
                     }
-                    else if (j.m_value.number_unsigned <= (std::numeric_limits<uint8_t>::max)())
+                    else if (j.m_value.number_unsigned <= (std::numeric_limits<unsigned short>::max)())
                     {
                         // uint 8
                         oa->write_character(static_cast<CharType>(0xCC));
-                        write_number(static_cast<uint8_t>(j.m_value.number_integer));
+                        write_number(static_cast<unsigned short>(j.m_value.number_integer));
                     }
-                    else if (j.m_value.number_unsigned <= (std::numeric_limits<uint16_t>::max)())
+                    else if (j.m_value.number_unsigned <= (std::numeric_limits<unsigned int>::max)())
                     {
                         // uint 16
                         oa->write_character(static_cast<CharType>(0xCD));
-                        write_number(static_cast<uint16_t>(j.m_value.number_integer));
+                        write_number(static_cast<unsigned int>(j.m_value.number_integer));
                     }
-                    else if (j.m_value.number_unsigned <= (std::numeric_limits<uint32_t>::max)())
+                    else if (j.m_value.number_unsigned <= (std::numeric_limits<unsigned long>::max)())
                     {
                         // uint 32
                         oa->write_character(static_cast<CharType>(0xCE));
-                        write_number(static_cast<uint32_t>(j.m_value.number_integer));
+                        write_number(static_cast<unsigned long>(j.m_value.number_integer));
                     }
-                    else if (j.m_value.number_unsigned <= (std::numeric_limits<uint64_t>::max)())
+                    else if (j.m_value.number_unsigned <= (std::numeric_limits<unsigned long long>::max)())
                     {
                         // uint 64
                         oa->write_character(static_cast<CharType>(0xCF));
-                        write_number(static_cast<uint64_t>(j.m_value.number_integer));
+                        write_number(static_cast<unsigned long long>(j.m_value.number_integer));
                     }
                 }
                 else
@@ -6549,35 +6549,35 @@ class binary_writer
                     if (j.m_value.number_integer >= -32)
                     {
                         // negative fixnum
-                        write_number(static_cast<int8_t>(j.m_value.number_integer));
+                        write_number(static_cast<short>(j.m_value.number_integer));
                     }
-                    else if (j.m_value.number_integer >= (std::numeric_limits<int8_t>::min)() and
-                             j.m_value.number_integer <= (std::numeric_limits<int8_t>::max)())
+                    else if (j.m_value.number_integer >= (std::numeric_limits<short>::min)() and
+                             j.m_value.number_integer <= (std::numeric_limits<short>::max)())
                     {
                         // int 8
                         oa->write_character(static_cast<CharType>(0xD0));
-                        write_number(static_cast<int8_t>(j.m_value.number_integer));
+                        write_number(static_cast<short>(j.m_value.number_integer));
                     }
-                    else if (j.m_value.number_integer >= (std::numeric_limits<int16_t>::min)() and
-                             j.m_value.number_integer <= (std::numeric_limits<int16_t>::max)())
+                    else if (j.m_value.number_integer >= (std::numeric_limits<int>::min)() and
+                             j.m_value.number_integer <= (std::numeric_limits<int>::max)())
                     {
                         // int 16
                         oa->write_character(static_cast<CharType>(0xD1));
-                        write_number(static_cast<int16_t>(j.m_value.number_integer));
+                        write_number(static_cast<int>(j.m_value.number_integer));
                     }
-                    else if (j.m_value.number_integer >= (std::numeric_limits<int32_t>::min)() and
-                             j.m_value.number_integer <= (std::numeric_limits<int32_t>::max)())
+                    else if (j.m_value.number_integer >= (std::numeric_limits<long>::min)() and
+                             j.m_value.number_integer <= (std::numeric_limits<long>::max)())
                     {
                         // int 32
                         oa->write_character(static_cast<CharType>(0xD2));
-                        write_number(static_cast<int32_t>(j.m_value.number_integer));
+                        write_number(static_cast<long>(j.m_value.number_integer));
                     }
-                    else if (j.m_value.number_integer >= (std::numeric_limits<int64_t>::min)() and
-                             j.m_value.number_integer <= (std::numeric_limits<int64_t>::max)())
+                    else if (j.m_value.number_integer >= (std::numeric_limits<long long>::min)() and
+                             j.m_value.number_integer <= (std::numeric_limits<long long>::max)())
                     {
                         // int 64
                         oa->write_character(static_cast<CharType>(0xD3));
-                        write_number(static_cast<int64_t>(j.m_value.number_integer));
+                        write_number(static_cast<long long>(j.m_value.number_integer));
                     }
                 }
                 break;
@@ -6588,31 +6588,31 @@ class binary_writer
                 if (j.m_value.number_unsigned < 128)
                 {
                     // positive fixnum
-                    write_number(static_cast<uint8_t>(j.m_value.number_integer));
+                    write_number(static_cast<unsigned short>(j.m_value.number_integer));
                 }
-                else if (j.m_value.number_unsigned <= (std::numeric_limits<uint8_t>::max)())
+                else if (j.m_value.number_unsigned <= (std::numeric_limits<unsigned short>::max)())
                 {
                     // uint 8
                     oa->write_character(static_cast<CharType>(0xCC));
-                    write_number(static_cast<uint8_t>(j.m_value.number_integer));
+                    write_number(static_cast<unsigned short>(j.m_value.number_integer));
                 }
-                else if (j.m_value.number_unsigned <= (std::numeric_limits<uint16_t>::max)())
+                else if (j.m_value.number_unsigned <= (std::numeric_limits<unsigned int>::max)())
                 {
                     // uint 16
                     oa->write_character(static_cast<CharType>(0xCD));
-                    write_number(static_cast<uint16_t>(j.m_value.number_integer));
+                    write_number(static_cast<unsigned int>(j.m_value.number_integer));
                 }
-                else if (j.m_value.number_unsigned <= (std::numeric_limits<uint32_t>::max)())
+                else if (j.m_value.number_unsigned <= (std::numeric_limits<unsigned long>::max)())
                 {
                     // uint 32
                     oa->write_character(static_cast<CharType>(0xCE));
-                    write_number(static_cast<uint32_t>(j.m_value.number_integer));
+                    write_number(static_cast<unsigned long>(j.m_value.number_integer));
                 }
-                else if (j.m_value.number_unsigned <= (std::numeric_limits<uint64_t>::max)())
+                else if (j.m_value.number_unsigned <= (std::numeric_limits<unsigned long long>::max)())
                 {
                     // uint 64
                     oa->write_character(static_cast<CharType>(0xCF));
-                    write_number(static_cast<uint64_t>(j.m_value.number_integer));
+                    write_number(static_cast<unsigned long long>(j.m_value.number_integer));
                 }
                 break;
             }
@@ -6631,25 +6631,25 @@ class binary_writer
                 if (N <= 31)
                 {
                     // fixstr
-                    write_number(static_cast<uint8_t>(0xA0 | N));
+                    write_number(static_cast<unsigned short>(0xA0 | N));
                 }
-                else if (N <= (std::numeric_limits<uint8_t>::max)())
+                else if (N <= (std::numeric_limits<unsigned short>::max)())
                 {
                     // str 8
                     oa->write_character(static_cast<CharType>(0xD9));
-                    write_number(static_cast<uint8_t>(N));
+                    write_number(static_cast<unsigned short>(N));
                 }
-                else if (N <= (std::numeric_limits<uint16_t>::max)())
+                else if (N <= (std::numeric_limits<unsigned int>::max)())
                 {
                     // str 16
                     oa->write_character(static_cast<CharType>(0xDA));
-                    write_number(static_cast<uint16_t>(N));
+                    write_number(static_cast<unsigned int>(N));
                 }
-                else if (N <= (std::numeric_limits<uint32_t>::max)())
+                else if (N <= (std::numeric_limits<unsigned long>::max)())
                 {
                     // str 32
                     oa->write_character(static_cast<CharType>(0xDB));
-                    write_number(static_cast<uint32_t>(N));
+                    write_number(static_cast<unsigned long>(N));
                 }
 
                 // step 2: write the string
@@ -6666,19 +6666,19 @@ class binary_writer
                 if (N <= 15)
                 {
                     // fixarray
-                    write_number(static_cast<uint8_t>(0x90 | N));
+                    write_number(static_cast<unsigned short>(0x90 | N));
                 }
-                else if (N <= (std::numeric_limits<uint16_t>::max)())
+                else if (N <= (std::numeric_limits<unsigned int>::max)())
                 {
                     // array 16
                     oa->write_character(static_cast<CharType>(0xDC));
-                    write_number(static_cast<uint16_t>(N));
+                    write_number(static_cast<unsigned int>(N));
                 }
-                else if (N <= (std::numeric_limits<uint32_t>::max)())
+                else if (N <= (std::numeric_limits<unsigned long>::max)())
                 {
                     // array 32
                     oa->write_character(static_cast<CharType>(0xDD));
-                    write_number(static_cast<uint32_t>(N));
+                    write_number(static_cast<unsigned long>(N));
                 }
 
                 // step 2: write each element
@@ -6696,19 +6696,19 @@ class binary_writer
                 if (N <= 15)
                 {
                     // fixmap
-                    write_number(static_cast<uint8_t>(0x80 | (N & 0xF)));
+                    write_number(static_cast<unsigned short>(0x80 | (N & 0xF)));
                 }
-                else if (N <= (std::numeric_limits<uint16_t>::max)())
+                else if (N <= (std::numeric_limits<unsigned int>::max)())
                 {
                     // map 16
                     oa->write_character(static_cast<CharType>(0xDE));
-                    write_number(static_cast<uint16_t>(N));
+                    write_number(static_cast<unsigned int>(N));
                 }
-                else if (N <= (std::numeric_limits<uint32_t>::max)())
+                else if (N <= (std::numeric_limits<unsigned long>::max)())
                 {
                     // map 32
                     oa->write_character(static_cast<CharType>(0xDF));
-                    write_number(static_cast<uint32_t>(N));
+                    write_number(static_cast<unsigned long>(N));
                 }
 
                 // step 2: write each element
@@ -6931,45 +6931,45 @@ class binary_writer
     void write_number_with_ubjson_prefix(const NumberType n,
                                          const bool add_prefix)
     {
-        if (n <= static_cast<uint64_t>((std::numeric_limits<int8_t>::max)()))
+        if (n <= static_cast<unsigned long long>((std::numeric_limits<short>::max)()))
         {
             if (add_prefix)
             {
                 oa->write_character(static_cast<CharType>('i'));  // int8
             }
-            write_number(static_cast<uint8_t>(n));
+            write_number(static_cast<unsigned short>(n));
         }
-        else if (n <= (std::numeric_limits<uint8_t>::max)())
+        else if (n <= (std::numeric_limits<unsigned short>::max)())
         {
             if (add_prefix)
             {
                 oa->write_character(static_cast<CharType>('U'));  // uint8
             }
-            write_number(static_cast<uint8_t>(n));
+            write_number(static_cast<unsigned short>(n));
         }
-        else if (n <= static_cast<uint64_t>((std::numeric_limits<int16_t>::max)()))
+        else if (n <= static_cast<unsigned long long>((std::numeric_limits<int>::max)()))
         {
             if (add_prefix)
             {
                 oa->write_character(static_cast<CharType>('I'));  // int16
             }
-            write_number(static_cast<int16_t>(n));
+            write_number(static_cast<int>(n));
         }
-        else if (n <= static_cast<uint64_t>((std::numeric_limits<int32_t>::max)()))
+        else if (n <= static_cast<unsigned long long>((std::numeric_limits<long>::max)()))
         {
             if (add_prefix)
             {
                 oa->write_character(static_cast<CharType>('l'));  // int32
             }
-            write_number(static_cast<int32_t>(n));
+            write_number(static_cast<long>(n));
         }
-        else if (n <= static_cast<uint64_t>((std::numeric_limits<int64_t>::max)()))
+        else if (n <= static_cast<unsigned long long>((std::numeric_limits<long long>::max)()))
         {
             if (add_prefix)
             {
                 oa->write_character(static_cast<CharType>('L'));  // int64
             }
-            write_number(static_cast<int64_t>(n));
+            write_number(static_cast<long long>(n));
         }
         else
         {
@@ -6984,45 +6984,45 @@ class binary_writer
     void write_number_with_ubjson_prefix(const NumberType n,
                                          const bool add_prefix)
     {
-        if ((std::numeric_limits<int8_t>::min)() <= n and n <= (std::numeric_limits<int8_t>::max)())
+        if ((std::numeric_limits<short>::min)() <= n and n <= (std::numeric_limits<short>::max)())
         {
             if (add_prefix)
             {
                 oa->write_character(static_cast<CharType>('i'));  // int8
             }
-            write_number(static_cast<int8_t>(n));
+            write_number(static_cast<short>(n));
         }
-        else if (static_cast<int64_t>((std::numeric_limits<uint8_t>::min)()) <= n and n <= static_cast<int64_t>((std::numeric_limits<uint8_t>::max)()))
+        else if (static_cast<long long>((std::numeric_limits<unsigned short>::min)()) <= n and n <= static_cast<long long>((std::numeric_limits<unsigned short>::max)()))
         {
             if (add_prefix)
             {
                 oa->write_character(static_cast<CharType>('U'));  // uint8
             }
-            write_number(static_cast<uint8_t>(n));
+            write_number(static_cast<unsigned short>(n));
         }
-        else if ((std::numeric_limits<int16_t>::min)() <= n and n <= (std::numeric_limits<int16_t>::max)())
+        else if ((std::numeric_limits<int>::min)() <= n and n <= (std::numeric_limits<int>::max)())
         {
             if (add_prefix)
             {
                 oa->write_character(static_cast<CharType>('I'));  // int16
             }
-            write_number(static_cast<int16_t>(n));
+            write_number(static_cast<int>(n));
         }
-        else if ((std::numeric_limits<int32_t>::min)() <= n and n <= (std::numeric_limits<int32_t>::max)())
+        else if ((std::numeric_limits<long>::min)() <= n and n <= (std::numeric_limits<long>::max)())
         {
             if (add_prefix)
             {
                 oa->write_character(static_cast<CharType>('l'));  // int32
             }
-            write_number(static_cast<int32_t>(n));
+            write_number(static_cast<long>(n));
         }
-        else if ((std::numeric_limits<int64_t>::min)() <= n and n <= (std::numeric_limits<int64_t>::max)())
+        else if ((std::numeric_limits<long long>::min)() <= n and n <= (std::numeric_limits<long long>::max)())
         {
             if (add_prefix)
             {
                 oa->write_character(static_cast<CharType>('L'));  // int64
             }
-            write_number(static_cast<int64_t>(n));
+            write_number(static_cast<long long>(n));
         }
         // LCOV_EXCL_START
         else
@@ -7036,7 +7036,7 @@ class binary_writer
     @brief determine the type prefix of container values
 
     @note This function does not need to be 100% accurate when it comes to
-          integer limits. In case a number exceeds the limits of int64_t,
+          integer limits. In case a number exceeds the limits of long long,
           this will be detected by a later call to function
           write_number_with_ubjson_prefix. Therefore, we return 'L' for any
           value that does not fit the previous limits.
@@ -7053,23 +7053,23 @@ class binary_writer
 
             case value_t::number_integer:
             {
-                if ((std::numeric_limits<int8_t>::min)() <= j.m_value.number_integer and j.m_value.number_integer <= (std::numeric_limits<int8_t>::max)())
+                if ((std::numeric_limits<short>::min)() <= j.m_value.number_integer and j.m_value.number_integer <= (std::numeric_limits<short>::max)())
                 {
                     return 'i';
                 }
-                else if ((std::numeric_limits<uint8_t>::min)() <= j.m_value.number_integer and j.m_value.number_integer <= (std::numeric_limits<uint8_t>::max)())
+                else if ((std::numeric_limits<unsigned short>::min)() <= j.m_value.number_integer and j.m_value.number_integer <= (std::numeric_limits<unsigned short>::max)())
                 {
                     return 'U';
                 }
-                else if ((std::numeric_limits<int16_t>::min)() <= j.m_value.number_integer and j.m_value.number_integer <= (std::numeric_limits<int16_t>::max)())
+                else if ((std::numeric_limits<int>::min)() <= j.m_value.number_integer and j.m_value.number_integer <= (std::numeric_limits<int>::max)())
                 {
                     return 'I';
                 }
-                else if ((std::numeric_limits<int32_t>::min)() <= j.m_value.number_integer and j.m_value.number_integer <= (std::numeric_limits<int32_t>::max)())
+                else if ((std::numeric_limits<long>::min)() <= j.m_value.number_integer and j.m_value.number_integer <= (std::numeric_limits<long>::max)())
                 {
                     return 'l';
                 }
-                else  // no check and assume int64_t (see note above)
+                else  // no check and assume long long (see note above)
                 {
                     return 'L';
                 }
@@ -7077,23 +7077,23 @@ class binary_writer
 
             case value_t::number_unsigned:
             {
-                if (j.m_value.number_unsigned <= (std::numeric_limits<int8_t>::max)())
+                if (j.m_value.number_unsigned <= (std::numeric_limits<short>::max)())
                 {
                     return 'i';
                 }
-                else if (j.m_value.number_unsigned <= (std::numeric_limits<uint8_t>::max)())
+                else if (j.m_value.number_unsigned <= (std::numeric_limits<unsigned short>::max)())
                 {
                     return 'U';
                 }
-                else if (j.m_value.number_unsigned <= (std::numeric_limits<int16_t>::max)())
+                else if (j.m_value.number_unsigned <= (std::numeric_limits<int>::max)())
                 {
                     return 'I';
                 }
-                else if (j.m_value.number_unsigned <= (std::numeric_limits<int32_t>::max)())
+                else if (j.m_value.number_unsigned <= (std::numeric_limits<long>::max)())
                 {
                     return 'l';
                 }
-                else  // no check and assume int64_t (see note above)
+                else  // no check and assume long long (see note above)
                 {
                     return 'L';
                 }
@@ -7166,7 +7166,7 @@ class binary_writer
 #include <clocale> // localeconv, lconv
 #include <cmath> // labs, isfinite, isnan, signbit
 #include <cstddef> // size_t, ptrdiff_t
-#include <cstdint> // uint8_t
+//#include <cstdint> // unsigned short
 #include <cstdio> // snprintf
 #include <iomanip> // setfill
 #include <iterator> // next
@@ -7183,7 +7183,7 @@ class binary_writer
 #include <cassert> // assert
 #include <ciso646> // or, and, not
 #include <cmath>   // signbit, isfinite
-#include <cstdint> // intN_t, uintN_t
+//#include <cstdint> // intN_t, uintN_t
 #include <cstring> // memcpy, memmove
 
 namespace nlohmann
@@ -7227,11 +7227,11 @@ struct diyfp // f * 2^e
 {
     static constexpr int kPrecision = 64; // = q
 
-    uint64_t f;
+    unsigned long long f;
     int e;
 
     constexpr diyfp() noexcept : f(0), e(0) {}
-    constexpr diyfp(uint64_t f_, int e_) noexcept : f(f_), e(e_) {}
+    constexpr diyfp(unsigned long long f_, int e_) noexcept : f(f_), e(e_) {}
 
     /*!
     @brief returns x - y
@@ -7276,23 +7276,23 @@ struct diyfp // f * 2^e
         //
         //   = p_lo + 2^64 p_hi
 
-        const uint64_t u_lo = x.f & 0xFFFFFFFF;
-        const uint64_t u_hi = x.f >> 32;
-        const uint64_t v_lo = y.f & 0xFFFFFFFF;
-        const uint64_t v_hi = y.f >> 32;
+        const unsigned long long u_lo = x.f & 0xFFFFFFFF;
+        const unsigned long long u_hi = x.f >> 32;
+        const unsigned long long v_lo = y.f & 0xFFFFFFFF;
+        const unsigned long long v_hi = y.f >> 32;
 
-        const uint64_t p0 = u_lo * v_lo;
-        const uint64_t p1 = u_lo * v_hi;
-        const uint64_t p2 = u_hi * v_lo;
-        const uint64_t p3 = u_hi * v_hi;
+        const unsigned long long p0 = u_lo * v_lo;
+        const unsigned long long p1 = u_lo * v_hi;
+        const unsigned long long p2 = u_hi * v_lo;
+        const unsigned long long p3 = u_hi * v_hi;
 
-        const uint64_t p0_hi = p0 >> 32;
-        const uint64_t p1_lo = p1 & 0xFFFFFFFF;
-        const uint64_t p1_hi = p1 >> 32;
-        const uint64_t p2_lo = p2 & 0xFFFFFFFF;
-        const uint64_t p2_hi = p2 >> 32;
+        const unsigned long long p0_hi = p0 >> 32;
+        const unsigned long long p1_lo = p1 & 0xFFFFFFFF;
+        const unsigned long long p1_hi = p1 >> 32;
+        const unsigned long long p2_lo = p2 & 0xFFFFFFFF;
+        const unsigned long long p2_hi = p2 >> 32;
 
-        uint64_t Q = p0_hi + p1_lo + p2_lo;
+        unsigned long long Q = p0_hi + p1_lo + p2_lo;
 
         // The full product might now be computed as
         //
@@ -7303,9 +7303,9 @@ struct diyfp // f * 2^e
         // Effectively we only need to add the highest bit in p_lo to p_hi (and
         // Q_hi + 1 does not overflow).
 
-        Q += uint64_t{1} << (64 - 32 - 1); // round, ties up
+        Q += unsigned long long{1} << (64 - 32 - 1); // round, ties up
 
-        const uint64_t h = p3 + p2_hi + p1_hi + (Q >> 32);
+        const unsigned long long h = p3 + p2_hi + p1_hi + (Q >> 32);
 
         return diyfp(h, x.e + y.e + 64);
     }
@@ -7374,13 +7374,13 @@ boundaries compute_boundaries(FloatType value)
     constexpr int      kPrecision = std::numeric_limits<FloatType>::digits; // = p (includes the hidden bit)
     constexpr int      kBias      = std::numeric_limits<FloatType>::max_exponent - 1 + (kPrecision - 1);
     constexpr int      kMinExp    = 1 - kBias;
-    constexpr uint64_t kHiddenBit = uint64_t{1} << (kPrecision - 1); // = 2^(p-1)
+    constexpr unsigned long long kHiddenBit = unsigned long long{1} << (kPrecision - 1); // = 2^(p-1)
 
-    using bits_type = typename std::conditional< kPrecision == 24, uint32_t, uint64_t >::type;
+    using bits_type = typename std::conditional< kPrecision == 24, unsigned long, unsigned long long >::type;
 
-    const uint64_t bits = reinterpret_bits<bits_type>(value);
-    const uint64_t E = bits >> (kPrecision - 1);
-    const uint64_t F = bits & (kHiddenBit - 1);
+    const unsigned long long bits = reinterpret_bits<bits_type>(value);
+    const unsigned long long E = bits >> (kPrecision - 1);
+    const unsigned long long F = bits & (kHiddenBit - 1);
 
     const bool is_denormal = (E == 0);
     const diyfp v = is_denormal
@@ -7483,7 +7483,7 @@ constexpr int kGamma = -32;
 
 struct cached_power // c = f * 2^e ~= 10^k
 {
-    uint64_t f;
+    unsigned long long f;
     int e;
     int k;
 };
@@ -7659,7 +7659,7 @@ inline cached_power get_cached_power_for_binary_exponent(int e)
 For n != 0, returns k, such that pow10 := 10^(k-1) <= n < 10^k.
 For n == 0, returns 1 and sets pow10 := 1.
 */
-inline int find_largest_pow10(const uint32_t n, uint32_t& pow10)
+inline int find_largest_pow10(const unsigned long n, unsigned long& pow10)
 {
     // LCOV_EXCL_START
     if (n >= 1000000000)
@@ -7715,8 +7715,8 @@ inline int find_largest_pow10(const uint32_t n, uint32_t& pow10)
     }
 }
 
-inline void grisu2_round(char* buf, int len, uint64_t dist, uint64_t delta,
-                         uint64_t rest, uint64_t ten_k)
+inline void grisu2_round(char* buf, int len, unsigned long long dist, unsigned long long delta,
+                         unsigned long long rest, unsigned long long ten_k)
 {
     assert(len >= 1);
     assert(dist <= delta);
@@ -7777,8 +7777,8 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
     assert(M_plus.e >= kAlpha);
     assert(M_plus.e <= kGamma);
 
-    uint64_t delta = diyfp::sub(M_plus, M_minus).f; // (significand of (M+ - M-), implicit exponent is e)
-    uint64_t dist  = diyfp::sub(M_plus, w      ).f; // (significand of (M+ - w ), implicit exponent is e)
+    unsigned long long delta = diyfp::sub(M_plus, M_minus).f; // (significand of (M+ - M-), implicit exponent is e)
+    unsigned long long dist  = diyfp::sub(M_plus, w      ).f; // (significand of (M+ - w ), implicit exponent is e)
 
     // Split M+ = f * 2^e into two parts p1 and p2 (note: e < 0):
     //
@@ -7787,10 +7787,10 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
     //         = ((p1        ) * 2^-e + (p2        )) * 2^e
     //         = p1 + p2 * 2^e
 
-    const diyfp one(uint64_t{1} << -M_plus.e, M_plus.e);
+    const diyfp one(unsigned long long{1} << -M_plus.e, M_plus.e);
 
-    uint32_t p1 = static_cast<uint32_t>(M_plus.f >> -one.e); // p1 = f div 2^-e (Since -e >= 32, p1 fits into a 32-bit int.)
-    uint64_t p2 = M_plus.f & (one.f - 1);                    // p2 = f mod 2^-e
+    unsigned long p1 = static_cast<unsigned long>(M_plus.f >> -one.e); // p1 = f div 2^-e (Since -e >= 32, p1 fits into a 32-bit int.)
+    unsigned long long p2 = M_plus.f & (one.f - 1);                    // p2 = f mod 2^-e
 
     // 1)
     //
@@ -7798,7 +7798,7 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
 
     assert(p1 > 0);
 
-    uint32_t pow10;
+    unsigned long pow10;
     const int k = find_largest_pow10(p1, pow10);
 
     //      10^(k-1) <= p1 < 10^k, pow10 = 10^(k-1)
@@ -7826,8 +7826,8 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
         //      M+ = buffer * 10^n + (p1 + p2 * 2^e)    (buffer = 0 for n = k)
         //      pow10 = 10^(n-1) <= p1 < 10^n
         //
-        const uint32_t d = p1 / pow10;  // d = p1 div 10^(n-1)
-        const uint32_t r = p1 % pow10;  // r = p1 mod 10^(n-1)
+        const unsigned long d = p1 / pow10;  // d = p1 div 10^(n-1)
+        const unsigned long r = p1 % pow10;  // r = p1 mod 10^(n-1)
         //
         //      M+ = buffer * 10^n + (d * 10^(n-1) + r) + p2 * 2^e
         //         = (buffer * 10 + d) * 10^(n-1) + (r + p2 * 2^e)
@@ -7852,7 +7852,7 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
         // Note:
         // Since rest and delta share the same exponent e, it suffices to
         // compare the significands.
-        const uint64_t rest = (uint64_t{p1} << -one.e) + p2;
+        const unsigned long long rest = (unsigned long long{p1} << -one.e) + p2;
         if (rest <= delta)
         {
             // V = buffer * 10^n, with M- <= V <= M+.
@@ -7868,7 +7868,7 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
             //
             //      10^n = (10^n * 2^-e) * 2^e = ulp * 2^e
             //
-            const uint64_t ten_n = uint64_t{pow10} << -one.e;
+            const unsigned long long ten_n = unsigned long long{pow10} << -one.e;
             grisu2_round(buffer, length, dist, delta, rest, ten_n);
 
             return;
@@ -7932,8 +7932,8 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
         //
         assert(p2 <= UINT64_MAX / 10);
         p2 *= 10;
-        const uint64_t d = p2 >> -one.e;     // d = (10 * p2) div 2^-e
-        const uint64_t r = p2 & (one.f - 1); // r = (10 * p2) mod 2^-e
+        const unsigned long long d = p2 >> -one.e;     // d = (10 * p2) div 2^-e
+        const unsigned long long r = p2 & (one.f - 1); // r = (10 * p2) mod 2^-e
         //
         //      M+ = buffer * 10^-m + 10^-m * (1/10 * (d * 2^-e + r) * 2^e
         //         = buffer * 10^-m + 10^-m * (1/10 * (d + r * 2^e))
@@ -7973,7 +7973,7 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
     //
     //      10^m * 10^-m = 1 = 2^-e * 2^e = ten_m * 2^e
     //
-    const uint64_t ten_m = one.f;
+    const unsigned long long ten_m = one.f;
     grisu2_round(buffer, length, dist, delta, p2, ten_m);
 
     // By construction this algorithm generates the shortest possible decimal
@@ -8108,7 +8108,7 @@ inline char* append_exponent(char* buf, int e)
         *buf++ = '+';
     }
 
-    uint32_t k = static_cast<uint32_t>(e);
+    unsigned long k = static_cast<unsigned long>(e);
     if (k < 10)
     {
         // Always print at least two digits in the exponent.
@@ -8298,8 +8298,8 @@ class serializer
     using number_float_t = typename BasicJsonType::number_float_t;
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
-    static constexpr uint8_t UTF8_ACCEPT = 0;
-    static constexpr uint8_t UTF8_REJECT = 1;
+    static constexpr unsigned short UTF8_ACCEPT = 0;
+    static constexpr unsigned short UTF8_REJECT = 1;
 
   public:
     /*!
@@ -8543,13 +8543,13 @@ class serializer
     */
     void dump_escaped(const string_t& s, const bool ensure_ascii)
     {
-        uint32_t codepoint;
-        uint8_t state = UTF8_ACCEPT;
+        unsigned long codepoint;
+        unsigned short state = UTF8_ACCEPT;
         std::size_t bytes = 0;  // number of bytes written to string_buffer
 
         for (std::size_t i = 0; i < s.size(); ++i)
         {
-            const auto byte = static_cast<uint8_t>(s[i]);
+            const auto byte = static_cast<unsigned short>(s[i]);
 
             switch (decode(state, codepoint, byte))
             {
@@ -8615,14 +8615,14 @@ class serializer
                                 if (codepoint <= 0xFFFF)
                                 {
                                     std::snprintf(string_buffer.data() + bytes, 7, "\\u%04x",
-                                                  static_cast<uint16_t>(codepoint));
+                                                  static_cast<unsigned int>(codepoint));
                                     bytes += 6;
                                 }
                                 else
                                 {
                                     std::snprintf(string_buffer.data() + bytes, 13, "\\u%04x\\u%04x",
-                                                  static_cast<uint16_t>(0xD7C0 + (codepoint >> 10)),
-                                                  static_cast<uint16_t>(0xDC00 + (codepoint & 0x3FF)));
+                                                  static_cast<unsigned int>(0xD7C0 + (codepoint >> 10)),
+                                                  static_cast<unsigned int>(0xDC00 + (codepoint & 0x3FF)));
                                     bytes += 12;
                                 }
                             }
@@ -8678,7 +8678,7 @@ class serializer
         {
             // we finish reading, but do not accept: string was incomplete
             std::stringstream ss;
-            ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << static_cast<int>(static_cast<uint8_t>(s.back()));
+            ss << std::setw(2) << std::uppercase << std::setfill('0') << std::hex << static_cast<int>(static_cast<unsigned short>(s.back()));
             JSON_THROW(type_error::create(316, "incomplete UTF-8 string; last byte: 0x" + ss.str()));
         }
     }
@@ -8836,9 +8836,9 @@ class serializer
     @copyright Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>
     @sa http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
     */
-    static uint8_t decode(uint8_t& state, uint32_t& codep, const uint8_t byte) noexcept
+    static unsigned short decode(unsigned short& state, unsigned long& codep, const unsigned short byte) noexcept
     {
-        static const std::array<uint8_t, 400> utf8d =
+        static const std::array<unsigned short, 400> utf8d =
         {
             {
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 00..1F
@@ -8858,11 +8858,11 @@ class serializer
             }
         };
 
-        const uint8_t type = utf8d[byte];
+        const unsigned short type = utf8d[byte];
 
         codep = (state != UTF8_ACCEPT)
                 ? (byte & 0x3fu) | (codep << 6)
-                : static_cast<uint32_t>(0xff >> type) & (byte);
+                : static_cast<unsigned long>(0xff >> type) & (byte);
 
         state = utf8d[256u + state * 16u + type];
         return state;
@@ -9728,10 +9728,10 @@ in @ref array_t)
 default; will be used in @ref string_t)
 @tparam BooleanType type for JSON booleans (`bool` by default; will be used
 in @ref boolean_t)
-@tparam NumberIntegerType type for JSON integer numbers (`int64_t` by
+@tparam NumberIntegerType type for JSON integer numbers (`long long` by
 default; will be used in @ref number_integer_t)
 @tparam NumberUnsignedType type for JSON unsigned integer numbers (@c
-`uint64_t` by default; will be used in @ref number_unsigned_t)
+`unsigned long long` by default; will be used in @ref number_unsigned_t)
 @tparam NumberFloatType type for JSON floating-point numbers (`double` by
 default; will be used in @ref number_float_t)
 @tparam AllocatorType type of the allocator to use (`std::allocator` by
@@ -10256,11 +10256,11 @@ class basic_json
 
     #### Default type
 
-    With the default values for @a NumberIntegerType (`int64_t`), the default
+    With the default values for @a NumberIntegerType (`long long`), the default
     value for @a number_integer_t is:
 
     @code {.cpp}
-    int64_t
+    long long
     @endcode
 
     #### Default behavior
@@ -10328,11 +10328,11 @@ class basic_json
 
     #### Default type
 
-    With the default values for @a NumberUnsignedType (`uint64_t`), the
+    With the default values for @a NumberUnsignedType (`unsigned long long`), the
     default value for @a number_unsigned_t is:
 
     @code {.cpp}
-    uint64_t
+    unsigned long long
     @endcode
 
     #### Default behavior
@@ -10839,7 +10839,7 @@ class basic_json
       containers can be used.
     - **numbers**: @ref number_integer_t, @ref number_unsigned_t,
       @ref number_float_t, and all convertible number types such as `int`,
-      `size_t`, `int64_t`, `float` or `double` can be used.
+      `size_t`, `long long`, `float` or `double` can be used.
     - **boolean**: @ref boolean_t / `bool` can be used.
 
     See the examples below.
@@ -15944,16 +15944,16 @@ class basic_json
 
     @since version 2.0.9
     */
-    static std::vector<uint8_t> to_cbor(const basic_json& j)
+    static std::vector<unsigned short> to_cbor(const basic_json& j)
     {
-        std::vector<uint8_t> result;
+        std::vector<unsigned short> result;
         to_cbor(j, result);
         return result;
     }
 
-    static void to_cbor(const basic_json& j, detail::output_adapter<uint8_t> o)
+    static void to_cbor(const basic_json& j, detail::output_adapter<unsigned short> o)
     {
-        binary_writer<uint8_t>(o).write_cbor(j);
+        binary_writer<unsigned short>(o).write_cbor(j);
     }
 
     static void to_cbor(const basic_json& j, detail::output_adapter<char> o)
@@ -16033,7 +16033,7 @@ class basic_json
     vector in MessagePack format.,to_msgpack}
 
     @sa http://msgpack.org
-    @sa @ref from_msgpack(const std::vector<uint8_t>&, const size_t) for the
+    @sa @ref from_msgpack(const std::vector<unsigned short>&, const size_t) for the
         analogous deserialization
     @sa @ref to_cbor(const basic_json& for the related CBOR format
     @sa @ref to_ubjson(const basic_json&, const bool, const bool) for the
@@ -16041,16 +16041,16 @@ class basic_json
 
     @since version 2.0.9
     */
-    static std::vector<uint8_t> to_msgpack(const basic_json& j)
+    static std::vector<unsigned short> to_msgpack(const basic_json& j)
     {
-        std::vector<uint8_t> result;
+        std::vector<unsigned short> result;
         to_msgpack(j, result);
         return result;
     }
 
-    static void to_msgpack(const basic_json& j, detail::output_adapter<uint8_t> o)
+    static void to_msgpack(const basic_json& j, detail::output_adapter<unsigned short> o)
     {
-        binary_writer<uint8_t>(o).write_msgpack(j);
+        binary_writer<unsigned short>(o).write_msgpack(j);
     }
 
     static void to_msgpack(const basic_json& j, detail::output_adapter<char> o)
@@ -16138,19 +16138,19 @@ class basic_json
 
     @since version 3.1.0
     */
-    static std::vector<uint8_t> to_ubjson(const basic_json& j,
+    static std::vector<unsigned short> to_ubjson(const basic_json& j,
                                           const bool use_size = false,
                                           const bool use_type = false)
     {
-        std::vector<uint8_t> result;
+        std::vector<unsigned short> result;
         to_ubjson(j, result, use_size, use_type);
         return result;
     }
 
-    static void to_ubjson(const basic_json& j, detail::output_adapter<uint8_t> o,
+    static void to_ubjson(const basic_json& j, detail::output_adapter<unsigned short> o,
                           const bool use_size = false, const bool use_type = false)
     {
-        binary_writer<uint8_t>(o).write_ubjson(j, use_size, use_type);
+        binary_writer<unsigned short>(o).write_ubjson(j, use_size, use_type);
     }
 
     static void to_ubjson(const basic_json& j, detail::output_adapter<char> o,
