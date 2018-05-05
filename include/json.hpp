@@ -38,7 +38,7 @@ SOFTWARE.
 #include <ciso646> // and, not, or
 #include <cstddef> // nullptr_t, ptrdiff_t, size_t
 #include <functional> // hash, less
-//#include <initializer_list> // initializer_list
+#include <initializer_list> // initializer_list
 #include <iosfwd> // istream, ostream
 #include <iterator> // iterator_traits, random_access_iterator_tag
 #include <numeric> // accumulate
@@ -1840,7 +1840,7 @@ class input_adapter
 #include <clocale> // localeconv
 #include <cstddef> // size_t
 #include <cstdlib> // strtof, strtod, strtold, strtoll, strtoull
-//#include <initializer_list> // initializer_list
+#include <initializer_list> // initializer_list
 #include <ios> // hex, uppercase
 #include <iomanip> // setw, setfill
 #include <sstream> // stringstream
@@ -2025,27 +2025,27 @@ class lexer
 
     @return true if and only if no range violation was detected
     */
-    //bool next_byte_in_range(std::initializer_list<int> ranges)
-    //{
-    //    assert(ranges.size() == 2 or ranges.size() == 4 or ranges.size() == 6);
-    //    add(current);
-//
-    //    for (auto range = ranges.begin(); range != ranges.end(); ++range)
-    //    {
-    //        get();
-    //        if (JSON_LIKELY(*range <= current and current <= *(++range)))
-    //        {
-    //            add(current);
-    //        }
-    //        else
-    //        {
-    //            error_message = "invalid string: ill-formed UTF-8 byte";
-    //            return false;
-    //        }
-    //    }
-//
-    //    return true;
-    //}
+    bool next_byte_in_range(std::initializer_list<int> ranges)
+    {
+        assert(ranges.size() == 2 or ranges.size() == 4 or ranges.size() == 6);
+        add(current);
+
+        for (auto range = ranges.begin(); range != ranges.end(); ++range)
+        {
+            get();
+            if (JSON_LIKELY(*range <= current and current <= *(++range)))
+            {
+                add(current);
+            }
+            else
+            {
+                error_message = "invalid string: ill-formed UTF-8 byte";
+                return false;
+            }
+        }
+
+        return true;
+    }
 
     /*!
     @brief scan a string literal
@@ -8896,7 +8896,7 @@ class serializer
 // #include <nlohmann/detail/json_ref.hpp>
 
 
-//#include <initializer_list>
+#include <initializer_list>
 #include <utility>
 
 namespace nlohmann
@@ -8917,9 +8917,9 @@ class json_ref
         : value_ref(const_cast<value_type*>(&value)), is_rvalue(false)
     {}
 
-    //json_ref(std::initializer_list<json_ref> init)
-    //    : owned_value(init), value_ref(&owned_value), is_rvalue(true)
-    //{}
+    json_ref(std::initializer_list<json_ref> init)
+        : owned_value(init), value_ref(&owned_value), is_rvalue(true)
+    {}
 
     template<class... Args>
     json_ref(Args&& ... args)
@@ -9844,7 +9844,7 @@ class basic_json
     template<typename T, typename SFINAE>
     using json_serializer = JSONSerializer<T, SFINAE>;
     /// helper type for initializer lists of basic_json values
-    //using initializer_list_t = std::initializer_list<detail::json_ref<basic_json>>;
+    using initializer_list_t = std::initializer_list<detail::json_ref<basic_json>>;
 
     ////////////////
     // exceptions //
@@ -11030,7 +11030,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    /*basic_json(initializer_list_t init,
+    basic_json(initializer_list_t init,
                bool type_deduction = true,
                value_t manual_type = value_t::array)
     {
@@ -11080,7 +11080,7 @@ class basic_json
         }
 
         assert_invariant();
-    }*/
+    }
 
     /*!
     @brief explicitly create an array from an initializer list
@@ -11119,10 +11119,10 @@ class basic_json
 
     @since version 1.0.0
     */
-    /*static basic_json array(initializer_list_t init = {})
+    static basic_json array(initializer_list_t init = {})
     {
         return basic_json(init, false, value_t::array);
-    }*/
+    }
 
     /*!
     @brief explicitly create an object from an initializer list
@@ -11162,10 +11162,10 @@ class basic_json
 
     @since version 1.0.0
     */
-    /*static basic_json object(initializer_list_t init = {})
+    static basic_json object(initializer_list_t init = {})
     {
         return basic_json(init, false, value_t::object);
-    }*/
+    }
 
     /*!
     @brief construct an array with count copies of given value
@@ -12460,9 +12460,9 @@ class basic_json
                    not std::is_same<ValueType, detail::json_ref<basic_json>>::value and
                    not std::is_same<ValueType, typename string_t::value_type>::value and
                    not detail::is_basic_json<ValueType>::value
-//#ifndef _MSC_VER  // fix for issue #167 operator<< ambiguity under VS2015
-//                   and not std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
-//#endif
+#ifndef _MSC_VER  // fix for issue #167 operator<< ambiguity under VS2015
+                   and not std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
+#endif
 #if defined(JSON_HAS_CPP_17)
                    and not std::is_same<ValueType, typename std::string_view>::value
 #endif
@@ -14455,7 +14455,7 @@ class basic_json
     @liveexample{The example shows how initializer lists are treated as
     objects when possible.,push_back__initializer_list}
     */
-    /*void push_back(initializer_list_t init)
+    void push_back(initializer_list_t init)
     {
         if (is_object() and init.size() == 2 and (*init.begin())->is_string())
         {
@@ -14467,17 +14467,17 @@ class basic_json
         {
             push_back(basic_json(init));
         }
-    }*/
+    }
 
     /*!
     @brief add an object to an object
     @copydoc push_back(initializer_list_t)
     */
-    /*reference operator+=(initializer_list_t init)
+    reference operator+=(initializer_list_t init)
     {
         push_back(init);
         return *this;
-    }*/
+    }
 
     /*!
     @brief add an object to an array
@@ -14758,7 +14758,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    /*iterator insert(const_iterator pos, initializer_list_t ilist)
+    iterator insert(const_iterator pos, initializer_list_t ilist)
     {
         // insert only works for arrays
         if (JSON_UNLIKELY(not is_array()))
@@ -14776,7 +14776,7 @@ class basic_json
         iterator result(this);
         result.m_it.array_iterator = m_value.array->insert(pos.m_it.array_iterator, ilist.begin(), ilist.end());
         return result;
-    }*/
+    }
 
     /*!
     @brief inserts elements
@@ -17328,3 +17328,4 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 
 
 #endif
+
