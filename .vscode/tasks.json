@@ -28,7 +28,10 @@
         {
             "label": "runICPC",
             "type": "shell",
-            "command": "bash build.local.sh",
+            "command": "./build.local.sh",
+            "args": [//compiler version
+                "18"
+            ],
             "group": {
                 "kind": "build",
                 "isDefault": true
