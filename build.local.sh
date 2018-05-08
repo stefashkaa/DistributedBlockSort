@@ -20,5 +20,5 @@ source /home/stefan/intel16/bin/compilervars.sh intel64
 which icpc /home/stefan/intel16/bin/icpc
 export LD_LIBRARY_PATH=/home/stefan/intel16/compilers_and_libraries_2016.3.210/linux/compiler/lib/intel64_lin/:$LD_LIBRARY_PATH
 fi
-icpc -qopenmp -Wall -I./include/ -L./lib/ -obuild/blocksort main.cpp -lcurl
+icpc -qopenmp -g -Wall -I./include/ -L./lib/ -obuild/blocksort main.cpp -lcurl
 exit 0

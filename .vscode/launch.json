@@ -19,7 +19,8 @@
                 }
             ],
             "linux": {
-                "preLaunchTask": "runGCC",//"runICPC",
+                "preLaunchTask": "runGCC",
+                //"preLaunchTask": "runICPC",
                 "environment":
                 [
                     /*{
