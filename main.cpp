@@ -1,4 +1,3 @@
-#define _SCL_SECURE_NO_WARNINGS 1
 /*$TET$actor*/
 
 /*
@@ -97,57 +96,129 @@ struct everest_queue {
 
 using namespace TEMPLET;
 
+struct my_engine : engine{
+	my_engine(int argc, char *argv[]){
+		::init(this, argc, argv);
+	}
+	void run(){ TEMPLET::run(this); }
+	void map(){ TEMPLET::map(this); }
+};
+
 #pragma templet ~mes=
 
-struct mes : message_interface {
-	/*$TET$mes$$data*/
+struct mes : message{
+	mes(actor*a, engine*e, int t) : _where(CLI), _cli(a), _client_id(t){
+		::init(this, a, e);
+	}
+
+	void send(){
+		if (_where == CLI){ TEMPLET::send(this, _srv, _server_id); _where = SRV; }
+		else if (_where == SRV){ TEMPLET::send(this, _cli, _client_id); _where = CLI; }
+	}
+
+/*$TET$mes$$data*/
 	int i;
-	/*$TET$*/
+/*$TET$*/
+
+	enum { CLI, SRV } _where;
+	actor* _srv;
+	actor* _cli;
+	int _client_id;
+	int _server_id;
 };
 
 #pragma templet ~task_sort=
 
-struct task_sort : message_interface {
-	/*$TET$task_sort$$data*/
+struct task_sort : message{
+	task_sort(actor*a, engine*e, int t) : _where(CLI), _cli(a), _client_id(t){
+		::init(this, a, e);
+	}
+
+	void send(){
+		if (_where == CLI){ TEMPLET::send(this, _srv, _server_id); _where = SRV; }
+		else if (_where == SRV){ TEMPLET::send(this, _cli, _client_id); _where = CLI; }
+	}
+
+/*$TET$task_sort$$data*/
 	int i; // index of block to be sorted
-		   /*$TET$*/
+/*$TET$*/
+
+	enum { CLI, SRV } _where;
+	actor* _srv;
+	actor* _cli;
+	int _client_id;
+	int _server_id;
 };
 
 #pragma templet ~task_merge=
 
-struct task_merge : message_interface {
-	/*$TET$task_merge$$data*/
+struct task_merge : message{
+	task_merge(actor*a, engine*e, int t) : _where(CLI), _cli(a), _client_id(t){
+		::init(this, a, e);
+	}
+
+	void send(){
+		if (_where == CLI){ TEMPLET::send(this, _srv, _server_id); _where = SRV; }
+		else if (_where == SRV){ TEMPLET::send(this, _cli, _client_id); _where = CLI; }
+	}
+
+/*$TET$task_merge$$data*/
 	int i, j; // indices of blocks to be merged
-			  /*$TET$*/
+/*$TET$*/
+
+	enum { CLI, SRV } _where;
+	actor* _srv;
+	actor* _cli;
+	int _client_id;
+	int _server_id;
 };
 
 #pragma templet *everest(s?task_sort,m?task_merge,timer?mes)
 
-struct everest : actor_interface {
-	everest(engine_interface&) {
-		/*$TET$everest$everest*/
+struct everest : actor{
+	enum tag{START,TAG_s,TAG_m,TAG_timer};
 
-		/*$TET$*/
+	everest(my_engine&e){
+		::init(this, &e, everest_recv_adapter);
+/*$TET$everest$everest*/
+
+/*$TET$*/
 	}
 
-	void s(task_sort&) {}
-	void m(task_merge&) {}
-	void timer(mes&) {}
+	bool access(message*m){ return TEMPLET::access(m, this); }
+	bool access(message&m){ return TEMPLET::access(&m, this); }
 
-	void s_handler(task_sort&m) {
-		/*$TET$everest$s*/
+	void at(int _at){ TEMPLET::at(this, _at); }
+	void delay(double t){ TEMPLET::delay(this, t); }
+	double time(){ return TEMPLET::time(this); }
+	void stop(){ TEMPLET::stop(this); }
+
+	void s(task_sort&m){m._server_id=TAG_s; m._srv=this;}
+	void m(task_merge&m){m._server_id=TAG_m; m._srv=this;}
+	void timer(mes&m){m._server_id=TAG_timer; m._srv=this;}
+
+	static void everest_recv_adapter (actor*a, message*m, int tag){
+		switch(tag){
+			case TAG_s: ((everest*)a)->s_handler(*((task_sort*)m)); break;
+			case TAG_m: ((everest*)a)->m_handler(*((task_merge*)m)); break;
+			case TAG_timer: ((everest*)a)->timer_handler(*((mes*)m)); break;
+		}
+	}
+
+	void s_handler(task_sort&m){
+/*$TET$everest$s*/
 		tsort.push_back(&m);
-		/*$TET$*/
+/*$TET$*/
 	}
 
-	void m_handler(task_merge&m) {
-		/*$TET$everest$m*/
+	void m_handler(task_merge&m){
+/*$TET$everest$m*/
 		tmerge.push_back(&m);
-		/*$TET$*/
+/*$TET$*/
 	}
 
-	void timer_handler(mes&m) {
-		/*$TET$everest$timer*/
+	void timer_handler(mes&m){
+/*$TET$everest$timer*/
 
 		// checking OMP task execution
 		for (std::list<everest_queue*>::iterator it = queue.begin(); it != queue.end();)
@@ -202,10 +273,10 @@ struct everest : actor_interface {
 			}
 		}
 		m.send();
-		/*$TET$*/
+/*$TET$*/
 	}
 
-	/*$TET$everest$$code&data*/
+/*$TET$everest$$code&data*/
 	~everest() {
 		everestAPI->removeAccessToken();
 		std::cout << "\n everest clean-up \n";
@@ -215,144 +286,224 @@ struct everest : actor_interface {
 	std::list<task_merge*> tmerge;
 	std::list<everest_queue*> queue;
 
-	/*$TET$*/
+/*$TET$*/
 };
 
 #pragma templet *timer(p!mes)+
 
-struct timer : actor_interface {
-	timer(engine_interface&) {
-		/*$TET$timer$timer*/
-		/*$TET$*/
+struct timer : actor{
+	enum tag{START,TAG_p};
+
+	timer(my_engine&e):p(this, &e, TAG_p){
+		::init(this, &e, timer_recv_adapter);
+		::init(&_start, this, &e);
+		::send(&_start, this, START);
+/*$TET$timer$timer*/
+/*$TET$*/
 	}
+
+	bool access(message*m){ return TEMPLET::access(m, this); }
+	bool access(message&m){ return TEMPLET::access(&m, this); }
+
+	void at(int _at){ TEMPLET::at(this, _at); }
+	void delay(double t){ TEMPLET::delay(this, t); }
+	double time(){ return TEMPLET::time(this); }
+	void stop(){ TEMPLET::stop(this); }
 
 	mes p;
 
-	void start() {
-		/*$TET$timer$start*/
-		p.send();
-		/*$TET$*/
+	static void timer_recv_adapter (actor*a, message*m, int tag){
+		switch(tag){
+			case TAG_p: ((timer*)a)->p_handler(*((mes*)m)); break;
+			case START: ((timer*)a)->start(); break;
+		}
 	}
 
-	void p_handler(mes&m) {
-		/*$TET$timer$p*/
+	void start(){
+/*$TET$timer$start*/
+		p.send();
+/*$TET$*/
+	}
+
+	void p_handler(mes&m){
+/*$TET$timer$p*/
 		int milliseconds = 10;
 		struct timespec ts;
 		ts.tv_sec = milliseconds / 1000;
 		ts.tv_nsec = (milliseconds % 1000) * 1000000;
 		nanosleep(&ts, NULL);
 		p.send();
-		/*$TET$*/
+/*$TET$*/
 	}
 
-	/*$TET$timer$$code&data*/
-	/*$TET$*/
+/*$TET$timer$$code&data*/
+/*$TET$*/
+	message _start;
 };
 
 #pragma templet *sorter(out!mes,e!task_sort)+
 
-struct sorter : actor_interface {
-	sorter(engine_interface&) {
-		/*$TET$sorter$sorter*/
-		/*$TET$*/
+struct sorter : actor{
+	enum tag{START,TAG_out,TAG_e};
+
+	sorter(my_engine&e):out(this, &e, TAG_out),e(this, &e, TAG_e){
+		::init(this, &e, sorter_recv_adapter);
+		::init(&_start, this, &e);
+		::send(&_start, this, START);
+/*$TET$sorter$sorter*/
+/*$TET$*/
 	}
+
+	bool access(message*m){ return TEMPLET::access(m, this); }
+	bool access(message&m){ return TEMPLET::access(&m, this); }
+
+	void at(int _at){ TEMPLET::at(this, _at); }
+	void delay(double t){ TEMPLET::delay(this, t); }
+	double time(){ return TEMPLET::time(this); }
+	void stop(){ TEMPLET::stop(this); }
 
 	mes out;
 	task_sort e;
 
-	void start() {
-		/*$TET$sorter$start*/
+	static void sorter_recv_adapter (actor*a, message*m, int tag){
+		switch(tag){
+			case TAG_out: ((sorter*)a)->out_handler(*((mes*)m)); break;
+			case TAG_e: ((sorter*)a)->e_handler(*((task_sort*)m)); break;
+			case START: ((sorter*)a)->start(); break;
+		}
+	}
+
+	void start(){
+/*$TET$sorter$start*/
 		e.i = i; // request to the service for sorting block i
 		e.send();
 		//block_sort(i);
 		//out.send();
-		/*$TET$*/
+/*$TET$*/
 	}
 
-	void out_handler(mes&m) {
-		/*$TET$sorter$out*/
-		/*$TET$*/
+	void out_handler(mes&m){
+/*$TET$sorter$out*/
+/*$TET$*/
 	}
 
-	void e_handler(task_sort&m) {
-		/*$TET$sorter$e*/
+	void e_handler(task_sort&m){
+/*$TET$sorter$e*/
 		out.send();
-		/*$TET$*/
+/*$TET$*/
 	}
 
-	/*$TET$sorter$$code&data*/
+/*$TET$sorter$$code&data*/
 	int i;
-	/*$TET$*/
+/*$TET$*/
+	message _start;
 };
 
 #pragma templet *producer(in?mes,out!mes)
 
-struct producer : actor_interface {
-	producer(engine_interface&) {
-		/*$TET$producer$producer*/
+struct producer : actor{
+	enum tag{START,TAG_in,TAG_out};
+
+	producer(my_engine&e):out(this, &e, TAG_out){
+		::init(this, &e, producer_recv_adapter);
+/*$TET$producer$producer*/
 		bc = NUM_BLOCKS;
 		i = 0;
-		/*$TET$*/
+/*$TET$*/
 	}
 
-	void in(mes&) {}
+	bool access(message*m){ return TEMPLET::access(m, this); }
+	bool access(message&m){ return TEMPLET::access(&m, this); }
+
+	void at(int _at){ TEMPLET::at(this, _at); }
+	void delay(double t){ TEMPLET::delay(this, t); }
+	double time(){ return TEMPLET::time(this); }
+	void stop(){ TEMPLET::stop(this); }
+
+	void in(mes&m){m._server_id=TAG_in; m._srv=this;}
 	mes out;
 
-	void in_handler(mes&m) {
-		/*$TET$producer$in*/
-		bc--;
-		if (!bc) out_handler(m);
-		/*$TET$*/
+	static void producer_recv_adapter (actor*a, message*m, int tag){
+		switch(tag){
+			case TAG_in: ((producer*)a)->in_handler(*((mes*)m)); break;
+			case TAG_out: ((producer*)a)->out_handler(*((mes*)m)); break;
+		}
 	}
 
-	void out_handler(mes&m) {
-		/*$TET$producer$out*/
+	void in_handler(mes&m){
+/*$TET$producer$in*/
+		bc--;
+		if (!bc) out_handler(m);
+/*$TET$*/
+	}
+
+	void out_handler(mes&m){
+/*$TET$producer$out*/
 		if (i == NUM_BLOCKS) return;
 		out.i = i++;
 		out.send();
-		/*$TET$*/
+/*$TET$*/
 	}
 
-	/*$TET$producer$$code&data*/
+/*$TET$producer$$code&data*/
 	int i, bc;
-	/*$TET$*/
+/*$TET$*/
 };
 
 #pragma templet *merger(in?mes,out!mes,e!task_merge)
 
-struct merger : actor_interface {
-	merger(engine_interface&) {
-		/*$TET$merger$merger*/
+struct merger : actor{
+	enum tag{START,TAG_in,TAG_out,TAG_e};
+
+	merger(my_engine&e):out(this, &e, TAG_out),e(this, &e, TAG_e){
+		::init(this, &e, merger_recv_adapter);
+/*$TET$merger$merger*/
 		is_first = true;
 		_in = 0;
-		/*$TET$*/
+/*$TET$*/
 	}
 
-	void in(mes&) {}
+	bool access(message*m){ return TEMPLET::access(m, this); }
+	bool access(message&m){ return TEMPLET::access(&m, this); }
+
+	void at(int _at){ TEMPLET::at(this, _at); }
+	void delay(double t){ TEMPLET::delay(this, t); }
+	double time(){ return TEMPLET::time(this); }
+	void stop(){ TEMPLET::stop(this); }
+
+	void in(mes&m){m._server_id=TAG_in; m._srv=this;}
 	mes out;
 	task_merge e;
 
-	void in_handler(mes&m) {
-		/*$TET$merger$in*/
+	static void merger_recv_adapter (actor*a, message*m, int tag){
+		switch(tag){
+			case TAG_in: ((merger*)a)->in_handler(*((mes*)m)); break;
+			case TAG_out: ((merger*)a)->out_handler(*((mes*)m)); break;
+			case TAG_e: ((merger*)a)->e_handler(*((task_merge*)m)); break;
+		}
+	}
+
+	void in_handler(mes&m){
+/*$TET$merger$in*/
 		_in = &m;
 		merge();
-		/*$TET$*/
+/*$TET$*/
 	}
 
-	void out_handler(mes&m) {
-		/*$TET$merger$out*/
+	void out_handler(mes&m){
+/*$TET$merger$out*/
 		merge();
-		/*$TET$*/
+/*$TET$*/
 	}
 
-	void e_handler(task_merge&m) {
-		/*$TET$merger$e*/
+	void e_handler(task_merge&m){
+/*$TET$merger$e*/
 		out.i = _in->i;
 		_in->send(); out.send();
-		/*$TET$*/
+/*$TET$*/
 	}
 
-	/*$TET$merger$$code&data*/
+/*$TET$merger$$code&data*/
 	void merge() {
 		if (!(access(_in) && access(out)))return;
 
@@ -373,33 +524,50 @@ struct merger : actor_interface {
 	int  j;
 	bool is_first;
 	mes* _in;
-	/*$TET$*/
+/*$TET$*/
 };
 
 #pragma templet *stopper(in?mes)
 
-struct stopper : actor_interface {
-	stopper(engine_interface&) {
-		/*$TET$stopper$stopper*/
-		/*$TET$*/
+struct stopper : actor{
+	enum tag{START,TAG_in};
+
+	stopper(my_engine&e){
+		::init(this, &e, stopper_recv_adapter);
+/*$TET$stopper$stopper*/
+/*$TET$*/
 	}
 
-	void in(mes&) {}
+	bool access(message*m){ return TEMPLET::access(m, this); }
+	bool access(message&m){ return TEMPLET::access(&m, this); }
 
-	void in_handler(mes&m) {
-		/*$TET$stopper$in*/
+	void at(int _at){ TEMPLET::at(this, _at); }
+	void delay(double t){ TEMPLET::delay(this, t); }
+	double time(){ return TEMPLET::time(this); }
+	void stop(){ TEMPLET::stop(this); }
+
+	void in(mes&m){m._server_id=TAG_in; m._srv=this;}
+
+	static void stopper_recv_adapter (actor*a, message*m, int tag){
+		switch(tag){
+			case TAG_in: ((stopper*)a)->in_handler(*((mes*)m)); break;
+		}
+	}
+
+	void in_handler(mes&m){
+/*$TET$stopper$in*/
 		stop();
-		/*$TET$*/
+/*$TET$*/
 	}
 
-	/*$TET$stopper$$code&data*/
-	/*$TET$*/
+/*$TET$stopper$$code&data*/
+/*$TET$*/
 };
 
 int main(int argc, char *argv[])
 {
-	engine_interface e(argc, argv);
-	/*$TET$footer*/
+	my_engine e(argc, argv);
+/*$TET$footer*/
 
 	system("uname -a");
 
@@ -473,5 +641,5 @@ int main(int argc, char *argv[])
 	system("pause");
 	return 0;
 
-	/*$TET$*/
+/*$TET$*/
 }
