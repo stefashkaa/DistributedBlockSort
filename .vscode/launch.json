@@ -19,13 +19,13 @@
                 }
             ],
             "linux": {
-                "preLaunchTask": "runICPC",
+                "preLaunchTask": "runGCC",//"runICPC",
                 "environment":
                 [
-                    {
+                    /*{
                         "name": "LD_LIBRARY_PATH",
                         "value": "/opt/intel/compilers_and_libraries_2018.2.199/linux/compiler/lib/intel64_lin/"
-                    }
+                    }*/
                     /*{
                         "name": "LD_LIBRARY_PATH",
                         "value": "/home/stefan/intel16/compilers_and_libraries_2016.3.210/linux/compiler/lib/intel64_lin/"

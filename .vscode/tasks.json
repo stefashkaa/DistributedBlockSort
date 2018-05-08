@@ -7,10 +7,11 @@
             "command": "g++",
             "args": [
                 "-fopenmp",
+                "-g",
                 "-Wall",
                 "-I./include/",
                 "-L./lib/",
-                "-o/build/blocksort",
+                "-obuild/blocksort",
                 "main.cpp",
                 "-lcurl"
             ],
