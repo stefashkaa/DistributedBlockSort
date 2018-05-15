@@ -2,55 +2,75 @@
 #define EVERESTAPI_CONNECTOR_CPP
 
 #include "curl/curl.h"
+#include <sys/stat.h>
 #include "iostream"
 
 using namespace std;
 
 class Connector {
+
 private:
     CURL *curl;
+
 public:
+    string token = "";
     struct Response {
         long code;
         string response;
     };
 
     Connector() {
-        curl = curl_easy_init();
-        curl_easy_setopt(curl, CURLOPT_COOKIEFILE, "cookie.txt");
-        curl_easy_setopt(curl, CURLOPT_COOKIEJAR, "cookie.txt");
+        init();
         struct curl_slist *headers = NULL;
         headers = curl_slist_append(headers, "Accept: application/json");
         headers = curl_slist_append(headers, "Content-Type: application/json");
         headers = curl_slist_append(headers, "charsets: utf-8");
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
-        //Debug
-        curl_easy_setopt(curl, CURLOPT_VERBOSE, true);
+        if(!token.empty()) {
+            headers = curl_slist_append(headers, (new string("Cookie: access_token=" + token))->c_str());
+        }
     }
 
     ~Connector() {
         curl_easy_cleanup(curl);
     }
 
+    void init() {
+        curl = curl_easy_init();
+        curl_easy_setopt(curl, CURLOPT_COOKIEFILE, "cookie.txt");
+        curl_easy_setopt(curl, CURLOPT_COOKIEJAR, "cookie.txt");
+
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
+        //Debug
+        curl_easy_setopt(curl, CURLOPT_VERBOSE, true);
+    }
+
     Response postRequest(string URL, string data) {
-        if (!curl)
+        if (!curl) {
             throw runtime_error("curl crushed");
+        }
+
         Response newResponse;
+
         curl_easy_setopt(curl, CURLOPT_HTTPPOST, true);
         curl_easy_setopt(curl, CURLOPT_URL, URL.c_str());
-        if (!data.empty())
+        if (!data.empty()) {
             curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
+        }
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &newResponse.response);
         curl_easy_perform(curl);
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &newResponse.code);
+        curl_easy_cleanup(curl);
+
         return newResponse;
     }
 
     Response getRequest(string URL) {
-        if (!curl)
+        if (!curl) {
             throw runtime_error("curl crushed");
+        }
+
         Response newResponse;
         curl_easy_setopt(curl, CURLOPT_HTTPGET, true);
         curl_easy_setopt(curl, CURLOPT_URL, URL.c_str());
@@ -58,38 +78,62 @@ public:
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &newResponse.response);
         curl_easy_perform(curl);
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &newResponse.code);
+        curl_easy_cleanup(curl);
+
         return newResponse;
     }
 
     Response deleteRequest(string URL) {
-        if (!curl)
+        if (!curl) {
             throw runtime_error("curl crushed");
+        }
+
         Response newResponse;
         curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
         curl_easy_setopt(curl, CURLOPT_URL, URL.c_str());
-        curl_easy_perform(curl);
-        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &newResponse.code);
-        return newResponse;
-    }
-
-    Response uploadFile(string URL, string filepath) {
-        if (!curl)
-            throw runtime_error("curl crushed");
-        Response newResponse;
-        //curl_mime *form = curl_mime_init(curl);
-        //curl_mimepart *field = curl_mime_addpart(form);
-        //curl_mime_name(field, "file");
-        //curl_mime_filedata(field, filepath.c_str());
-        struct curl_slist *headers = NULL;
-        headers = curl_slist_append(headers, "Expect:");
-        //headers = curl_slist_append(headers, "Content-Type: application/octet-stream");
-        curl_easy_setopt(curl, CURLOPT_URL, URL.c_str());
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-        //curl_easy_setopt(curl, CURLOPT_MIMEPOST, form);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &newResponse.response);
         curl_easy_perform(curl);
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &newResponse.code);
+        curl_easy_cleanup(curl);
+
+        return newResponse;
+    }
+
+    Response uploadFile(string URL, string fullName) {
+        if (!curl) {
+            throw runtime_error("curl crushed");
+        }
+        FILE* file = fopen(fullName.c_str(), "rb");
+
+        if (!file) {
+            throw runtime_error("file error");
+        }
+        struct stat file_info;
+
+        if(fstat(fileno(file), &file_info) != 0) {
+            throw runtime_error("file reading error");
+        }
+        struct curl_slist *headers = NULL;
+
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
+        headers = curl_slist_append(headers, "Expect:");
+        //headers = curl_slist_append(headers, "Content-Type: application/octet-stream");
+        curl_easy_setopt(curl, CURLOPT_URL, URL.c_str());
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+        curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
+        curl_easy_setopt(curl, CURLOPT_READFUNCTION, &fread);
+        curl_easy_setopt(curl, CURLOPT_READDATA, file);
+        curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE, (curl_off_t)file_info.st_size);
+
+        Response newResponse;
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &newResponse.response);
+        curl_easy_perform(curl);
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &newResponse.code);
+        curl_easy_cleanup(curl);
+
+        fclose(file);
         return newResponse;
     }
 

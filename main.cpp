@@ -23,12 +23,17 @@
 
 using namespace std;
 
+const string USERNAME = "stefanpopov";
+const string PASSWORD = "qwaszx1";
+const string SORTER_ID = "5ad08aac15000026d161cd49";
+const string MERGER_ID = "5ad08aac15000026d161cd49";
+
 // 1
-const int NUM_BLOCKS = 2;
-const int BLOCK_SIZE = 64000000;
+//const int NUM_BLOCKS = 2;
+//const int BLOCK_SIZE = 64000000;
 // 2
-//const int NUM_BLOCKS = 4;
-//const int BLOCK_SIZE = 32000000;
+const int NUM_BLOCKS = 4;
+const int BLOCK_SIZE = 32000000;
 // 3
 //const int NUM_BLOCKS = 8;
 //const int BLOCK_SIZE = 16000000;
@@ -45,9 +50,9 @@ const int BLOCK_SIZE = 64000000;
 //const int NUM_BLOCKS = 128;
 //const int BLOCK_SIZE = 1000000;
 
-Everest *everestAPI;
-
 int block_array[NUM_BLOCKS*BLOCK_SIZE];
+vector<Everest::File*> fileBlocks;
+vector<Everest::Job*> allJobs;
 
 void block_sort(int block_num)
 {
@@ -98,7 +103,7 @@ using namespace TEMPLET;
 
 struct my_engine : engine{
 	my_engine(int argc, char *argv[]){
-		::init(this, argc, argv);
+		TEMPLET::init(this, argc, argv);
 	}
 	void run(){ TEMPLET::run(this); }
 	void map(){ TEMPLET::map(this); }
@@ -108,7 +113,7 @@ struct my_engine : engine{
 
 struct mes : message{
 	mes(actor*a, engine*e, int t) : _where(CLI), _cli(a), _client_id(t){
-		::init(this, a, e);
+		TEMPLET::init(this, a, e);
 	}
 
 	void send(){
@@ -131,7 +136,7 @@ struct mes : message{
 
 struct task_sort : message{
 	task_sort(actor*a, engine*e, int t) : _where(CLI), _cli(a), _client_id(t){
-		::init(this, a, e);
+		TEMPLET::init(this, a, e);
 	}
 
 	void send(){
@@ -154,7 +159,7 @@ struct task_sort : message{
 
 struct task_merge : message{
 	task_merge(actor*a, engine*e, int t) : _where(CLI), _cli(a), _client_id(t){
-		::init(this, a, e);
+		TEMPLET::init(this, a, e);
 	}
 
 	void send(){
@@ -179,9 +184,11 @@ struct everest : actor{
 	enum tag{START,TAG_s,TAG_m,TAG_timer};
 
 	everest(my_engine&e){
-		::init(this, &e, everest_recv_adapter);
+		TEMPLET::init(this, &e, everest_recv_adapter);
 /*$TET$everest$everest*/
-
+		everestAPI = new Everest(USERNAME, PASSWORD, "blocksort");
+		//cout << "Access token: " << everestAPI->getAccessToken(USERNAME, PASSWORD, "blocksort") << endl;
+		createFiles();
 /*$TET$*/
 	}
 
@@ -226,9 +233,9 @@ struct everest : actor{
 			everest_queue* eq = *it;
 			if (eq->done) {
 				switch (eq->type) {
-				case everest_queue::SORT: eq->sort->send(); break;
-				case everest_queue::MERGE: eq->merge->send(); break;
-				default: std::cout << "unknown task type\n";
+					case everest_queue::SORT: eq->sort->send(); break;
+					case everest_queue::MERGE: eq->merge->send(); break;
+					default: std::cout << "unknown task type\n";
 				}
 				delete eq;
 				it = queue.erase(it);
@@ -250,7 +257,15 @@ struct everest : actor{
 
 #pragma omp task firstprivate(eq)
 			{
-				block_sort(eq->sort->i);
+				//block_sort(eq->sort->i);
+				Everest::File file = fileBlocks.at(eq->sort->i);
+				json inputs;//make json
+				Everest::Job* job = runJob(SORTER_ID, "sorter", inputs);
+				while(job->state != Everest::State::DONE) {
+					job->refresh();
+				}
+				//save result
+				//add job into vector
 				eq->done = true;
 			}
 		}
@@ -278,14 +293,35 @@ struct everest : actor{
 
 /*$TET$everest$$code&data*/
 	~everest() {
+		//for(Everest::File* f : fileBlocks) {
+		//	f->remove();
+		//}
+		everestAPI->deleteAllFiles();
 		everestAPI->removeAccessToken();
 		std::cout << "\n everest clean-up \n";
+		vector<Everest::File*>().swap(fileBlocks);
 	}
 
+	Everest *everestAPI;
 	std::list<task_sort*>  tsort;
 	std::list<task_merge*> tmerge;
 	std::list<everest_queue*> queue;
 
+	void createFiles() {
+		string name = "./build/file";
+		srand(1);
+		for(int block = 0; block < NUM_BLOCKS; block++) {
+			string fullName = name + to_string(block);
+			FILE* f = fopen(fullName.c_str(), "wb");
+			for(int index = 0; index < 1/*for test*/; index++) {
+				int r = rand();
+				fwrite(&r, sizeof(int), 1, f);
+			}
+			fclose(f);
+			fileBlocks.push_back(everestAPI->uploadFile(fullName));//256mb - too large, max 100mb
+			remove(fullName.c_str());
+		}
+	}
 /*$TET$*/
 };
 
@@ -295,9 +331,9 @@ struct timer : actor{
 	enum tag{START,TAG_p};
 
 	timer(my_engine&e):p(this, &e, TAG_p){
-		::init(this, &e, timer_recv_adapter);
-		::init(&_start, this, &e);
-		::send(&_start, this, START);
+		TEMPLET::init(this, &e, timer_recv_adapter);
+		TEMPLET::init(&_start, this, &e);
+		TEMPLET::send(&_start, this, START);
 /*$TET$timer$timer*/
 /*$TET$*/
 	}
@@ -347,9 +383,9 @@ struct sorter : actor{
 	enum tag{START,TAG_out,TAG_e};
 
 	sorter(my_engine&e):out(this, &e, TAG_out),e(this, &e, TAG_e){
-		::init(this, &e, sorter_recv_adapter);
-		::init(&_start, this, &e);
-		::send(&_start, this, START);
+		TEMPLET::init(this, &e, sorter_recv_adapter);
+		TEMPLET::init(&_start, this, &e);
+		TEMPLET::send(&_start, this, START);
 /*$TET$sorter$sorter*/
 /*$TET$*/
 	}
@@ -405,7 +441,7 @@ struct producer : actor{
 	enum tag{START,TAG_in,TAG_out};
 
 	producer(my_engine&e):out(this, &e, TAG_out){
-		::init(this, &e, producer_recv_adapter);
+		TEMPLET::init(this, &e, producer_recv_adapter);
 /*$TET$producer$producer*/
 		bc = NUM_BLOCKS;
 		i = 0;
@@ -456,7 +492,7 @@ struct merger : actor{
 	enum tag{START,TAG_in,TAG_out,TAG_e};
 
 	merger(my_engine&e):out(this, &e, TAG_out),e(this, &e, TAG_e){
-		::init(this, &e, merger_recv_adapter);
+		TEMPLET::init(this, &e, merger_recv_adapter);
 /*$TET$merger$merger*/
 		is_first = true;
 		_in = 0;
@@ -533,7 +569,7 @@ struct stopper : actor{
 	enum tag{START,TAG_in};
 
 	stopper(my_engine&e){
-		::init(this, &e, stopper_recv_adapter);
+		TEMPLET::init(this, &e, stopper_recv_adapter);
 /*$TET$stopper$stopper*/
 /*$TET$*/
 	}
@@ -571,33 +607,30 @@ int main(int argc, char *argv[])
 
 	system("uname -a");
 
-	everestAPI = new Everest();
-	cout << "Access token: " << everestAPI->getAccessToken("stefanpopov", "qwaszx1", "blocksort") << endl;
-
 	std::cout << "\nNUM_BLOCKS = " << NUM_BLOCKS << endl
 		<< "BLOCK_SIZE = " << BLOCK_SIZE << endl
 		<< "OMP_NUM_PROCS = " << omp_get_num_procs() << endl;
 
-	srand(1); for (int i = 0; i < NUM_BLOCKS*BLOCK_SIZE; i++)	block_array[i] = rand();
+	//srand(1); for (int i = 0; i < NUM_BLOCKS*BLOCK_SIZE; i++)	block_array[i] = rand();
 
 	double time = omp_get_wtime();
-	std::sort(&block_array[0], &block_array[NUM_BLOCKS*BLOCK_SIZE]);
-	time = omp_get_wtime() - time;
+	//std::sort(&block_array[0], &block_array[NUM_BLOCKS*BLOCK_SIZE]);
+	//time = omp_get_wtime() - time;
 
-	std::cout << "\nSequential sort time is " << time << " sec\n";
+	//std::cout << "\nSequential sort time is " << time << " sec\n";
 
 	//////////////////// sequential blocksort /////////////////////
-	srand(1); for (int i = 0; i < NUM_BLOCKS*BLOCK_SIZE; i++)	block_array[i] = rand();
+	//srand(1); for (int i = 0; i < NUM_BLOCKS*BLOCK_SIZE; i++)	block_array[i] = rand();
 
-	time = omp_get_wtime();
+	//time = omp_get_wtime();
 
-	for (int i = 0; i<NUM_BLOCKS; i++) block_sort(i);
-	for (int i = 1; i<NUM_BLOCKS; i++) for (int j = 0; j<i; j++) block_merge(j, i);
+	//for (int i = 0; i<NUM_BLOCKS; i++) block_sort(i);
+	//for (int i = 1; i<NUM_BLOCKS; i++) for (int j = 0; j<i; j++) block_merge(j, i);
 
-	time = omp_get_wtime() - time;
+	//time = omp_get_wtime() - time;
 
-	if (!is_sorted())std::cout << "\nSomething went wrong in the sequential block-sort!!!\n";
-	else std::cout << "Sequential block-sort time is " << time << " sec\n";
+	//if (!is_sorted())std::cout << "\nSomething went wrong in the sequential block-sort!!!\n";
+	//else std::cout << "Sequential block-sort time is " << time << " sec\n";
 	///////////////////////////////////////////////////////////////
 
 	/////////////////// parallel actor blocksort //////////////////
@@ -638,7 +671,7 @@ int main(int argc, char *argv[])
 
 	if (!is_sorted())std::cout << "\nSomething went wrong in the parallel actor block-sort!!!\n";
 	else std::cout << "\nParallel block-sort time is " << time << " sec\n";
-	system("pause");
+
 	return 0;
 
 /*$TET$*/
