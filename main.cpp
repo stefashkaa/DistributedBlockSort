@@ -25,67 +25,34 @@ using namespace std;
 
 const string USERNAME = "stefanpopov";
 const string PASSWORD = "qwaszx1";
-const string SORTER_ID = "5ad08aac15000026d161cd49";
-const string MERGER_ID = "5ad08aac15000026d161cd49";
+const string SORTER_ID = "5afc82b3140000203c6f7b75";
+const string MERGER_ID = "5afc83fc140000203c6f7b7d";
+const string IS_SORTED_ID = "5b150d0514000026876fcdc7";
 
 // 1
 //const int NUM_BLOCKS = 2;
-//const int BLOCK_SIZE = 64000000;
+//const int BLOCK_SIZE = 16000000;
 // 2
 const int NUM_BLOCKS = 4;
-const int BLOCK_SIZE = 32000000;
+const int BLOCK_SIZE = 250;//8000000;
 // 3
 //const int NUM_BLOCKS = 8;
-//const int BLOCK_SIZE = 16000000;
+//const int BLOCK_SIZE = 4000000;
 // 4
 //const int NUM_BLOCKS = 16;
-//const int BLOCK_SIZE = 8000000;
+//const int BLOCK_SIZE = 2000000;
 // 5
 //const int NUM_BLOCKS = 32;
-//const int BLOCK_SIZE = 4000000;
+//const int BLOCK_SIZE = 1000000;
 // 6
 //const int NUM_BLOCKS = 64;
-//const int BLOCK_SIZE = 2000000;
+//const int BLOCK_SIZE = 500000;
 // 7
 //const int NUM_BLOCKS = 128;
-//const int BLOCK_SIZE = 1000000;
+//const int BLOCK_SIZE = 250000;
 
-int block_array[NUM_BLOCKS*BLOCK_SIZE];
 vector<Everest::File*> fileBlocks;
 vector<Everest::Job*> allJobs;
-
-void block_sort(int block_num)
-{
-	std::sort(&block_array[block_num*BLOCK_SIZE], &block_array[(block_num + 1)*BLOCK_SIZE]);
-}
-
-void block_merge(int less_block_num, int more_block_num)
-{
-	int* tmp_array = (int*)malloc(sizeof(int)*(2 * BLOCK_SIZE));
-
-	if (!tmp_array) {
-		std::cout << "Memory allocation failed!!!\n";
-		exit(1);
-	}
-
-	std::merge(&block_array[less_block_num*BLOCK_SIZE], &block_array[(less_block_num + 1)*BLOCK_SIZE],
-		&block_array[more_block_num*BLOCK_SIZE], &block_array[(more_block_num + 1)*BLOCK_SIZE],
-		&tmp_array[0]);
-	std::copy(&tmp_array[0], &tmp_array[BLOCK_SIZE], &block_array[less_block_num*BLOCK_SIZE]);
-	std::copy(&tmp_array[BLOCK_SIZE], &tmp_array[2 * BLOCK_SIZE], &block_array[more_block_num*BLOCK_SIZE]);
-
-	free(tmp_array);
-}
-
-bool is_sorted()
-{
-	int prev = block_array[0];
-	for (int i = 1; i < NUM_BLOCKS*BLOCK_SIZE; i++) {
-		if (prev > block_array[i])return false;
-		prev = block_array[i];
-	}
-	return true;
-}
 
 struct task_sort;
 struct task_merge;
@@ -187,7 +154,6 @@ struct everest : actor{
 		TEMPLET::init(this, &e, everest_recv_adapter);
 /*$TET$everest$everest*/
 		everestAPI = new Everest(USERNAME, PASSWORD, "blocksort");
-		//cout << "Access token: " << everestAPI->getAccessToken(USERNAME, PASSWORD, "blocksort") << endl;
 		createFiles();
 /*$TET$*/
 	}
@@ -257,15 +223,20 @@ struct everest : actor{
 
 #pragma omp task firstprivate(eq)
 			{
-				//block_sort(eq->sort->i);
-				Everest::File file = fileBlocks.at(eq->sort->i);
-				json inputs;//make json
-				Everest::Job* job = runJob(SORTER_ID, "sorter", inputs);
+				auto file = fileBlocks.at(eq->sort->i);
+				json inputs;
+				inputs["file"] = file->uri;
+
+				auto job = everestAPI->runJob(SORTER_ID, "sorter", inputs);
+
 				while(job->state != Everest::State::DONE) {
 					job->refresh();
 				}
 				//save result
-				//add job into vector
+				file->uri = job->result["outSort"];
+				fileBlocks.at(eq->sort->i) = file;
+				allJobs.push_back(job);
+
 				eq->done = true;
 			}
 		}
@@ -283,7 +254,25 @@ struct everest : actor{
 
 #pragma omp task firstprivate(eq)
 			{
-				block_merge(eq->merge->i, eq->merge->j);
+				auto iFile = fileBlocks.at(eq->merge->i);
+				auto jFile = fileBlocks.at(eq->merge->j);
+				json inputs;
+
+				inputs["file1"] = iFile->uri;
+				inputs["file2"] = jFile->uri;
+
+				auto job = everestAPI->runJob(MERGER_ID, "merger", inputs);
+
+				while(job->state != Everest::State::DONE) {
+					job->refresh();
+				}
+				//save result
+				iFile->uri = job->result["outMerge1"];
+				jFile->uri = job->result["outMerge2"];
+				fileBlocks.at(eq->merge->i) = iFile;
+				fileBlocks.at(eq->merge->j) = jFile;
+				allJobs.push_back(job);
+
 				eq->done = true;
 			}
 		}
@@ -293,12 +282,13 @@ struct everest : actor{
 
 /*$TET$everest$$code&data*/
 	~everest() {
-		//for(Everest::File* f : fileBlocks) {
-		//	f->remove();
-		//}
+		isSorted();
 		everestAPI->deleteAllFiles();
+		for(Everest::Job* j : allJobs) {
+			j->remove();
+		}
 		everestAPI->removeAccessToken();
-		std::cout << "\n everest clean-up \n";
+		std::cout << "\n Everest clean-up \n";
 		vector<Everest::File*>().swap(fileBlocks);
 	}
 
@@ -310,17 +300,40 @@ struct everest : actor{
 	void createFiles() {
 		string name = "./build/file";
 		srand(1);
+
 		for(int block = 0; block < NUM_BLOCKS; block++) {
 			string fullName = name + to_string(block);
+
 			FILE* f = fopen(fullName.c_str(), "wb");
-			for(int index = 0; index < 1/*for test*/; index++) {
+			fwrite(&BLOCK_SIZE, sizeof(int), 1, f);
+
+			for(int index = 0; index < BLOCK_SIZE; index++) {
 				int r = rand();
 				fwrite(&r, sizeof(int), 1, f);
 			}
 			fclose(f);
-			fileBlocks.push_back(everestAPI->uploadFile(fullName));//256mb - too large, max 100mb
+
+			fileBlocks.push_back(everestAPI->uploadFile(fullName));
 			remove(fullName.c_str());
 		}
+	}
+
+	void isSorted() {
+		json files;
+		for(int i = 0; i < (int)fileBlocks.size(); i++) {
+			auto f = fileBlocks.at(i);
+			files[i] = f->uri;
+		}
+		json inputs;
+		inputs["files"] = files;
+
+		auto job = everestAPI->runJob(IS_SORTED_ID, "isSorted", inputs);
+
+		while(job->state != Everest::State::DONE) {
+			job->refresh();
+		}
+		auto answer = everestAPI->downloadFile(job->result["answer"]);
+		cout << answer << endl;
 	}
 /*$TET$*/
 };
@@ -469,7 +482,9 @@ struct producer : actor{
 	void in_handler(mes&m){
 /*$TET$producer$in*/
 		bc--;
-		if (!bc) out_handler(m);
+		if (!bc) {
+			out_handler(m);
+		}
 /*$TET$*/
 	}
 
@@ -634,6 +649,7 @@ int main(int argc, char *argv[])
 	///////////////////////////////////////////////////////////////
 
 	/////////////////// parallel actor blocksort //////////////////
+	omp_set_num_threads(1);
 	everest an_everest(e);
 	timer a_timer(e);
 
@@ -663,14 +679,11 @@ int main(int argc, char *argv[])
 	}
 	a_stoper.in(*prev);
 
-	srand(1); for (int i = 0; i < NUM_BLOCKS*BLOCK_SIZE; i++)	block_array[i] = rand();
-
 	time = omp_get_wtime();
 	e.run();
 	time = omp_get_wtime() - time;
 
-	if (!is_sorted())std::cout << "\nSomething went wrong in the parallel actor block-sort!!!\n";
-	else std::cout << "\nParallel block-sort time is " << time << " sec\n";
+	std::cout << "\nParallel block-sort time is " << time << " sec\n";
 
 	return 0;
 

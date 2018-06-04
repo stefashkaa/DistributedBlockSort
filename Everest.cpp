@@ -43,7 +43,6 @@ public:
         string app_id;
         State state;
         json inputs;
-        json outputs;
         json result;
         int references;
 
@@ -61,9 +60,6 @@ public:
 
             if (jobJSON.find("result") != jobJSON.end()) {
                 result = jobJSON["result"];
-            }
-            if (jobJSON.find("outputs") != jobJSON.end()) {
-                outputs = jobJSON["outputs"];
             }
 
             id = jobJSON["id"];
@@ -132,7 +128,7 @@ private:
 public:
     Everest(string username, string password, string label) {
         connector = new Connector();
-        getAccessToken(username, password, label);
+        cout << "Token: " << getAccessToken(username, password, label) << endl;
     }
 
     ~Everest() {
@@ -151,9 +147,7 @@ public:
 
         if (response.code == 200) {
             json responseJSON = json::parse(response.response);
-            string token = responseJSON["access_token"];
-            connector->token = token;
-            return token;
+            return responseJSON["access_token"];
         } else {
             throw runtime_error(string("getAccessToken crush. Error code: ") +
                 to_string(response.code));
@@ -257,7 +251,7 @@ public:
 
         if (response.code != 200 && response.code != 201) {
             throw runtime_error(string("runJob crush. Error code: ") +
-                to_string(response.code));
+                to_string(response.code) + "\n" + response.response);
         } else {
             return new Job(this, json::parse(response.response));
         }
@@ -307,19 +301,17 @@ public:
         return new File(this, json::parse(response.response));
     }
 
-    FILE* downloadFile(string fullName) {
+    string downloadFile(string fullName) {
         connector = new Connector();
 
         string link = baseURL;
-        link += "/api/files/";
         link += fullName;
         Response response = connector->getRequest(link);
         if (response.code != 200) {
             throw runtime_error(string("uploadFile crush. Error code: ") +
                 to_string(response.code));
         }
-        // TODO: write parser
-        return NULL;
+        return response.response;
     }
 
     void deleteFile(string uri) {

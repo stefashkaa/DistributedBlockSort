@@ -13,7 +13,6 @@ private:
     CURL *curl;
 
 public:
-    string token = "";
     struct Response {
         long code;
         string response;
@@ -21,14 +20,6 @@ public:
 
     Connector() {
         init();
-        struct curl_slist *headers = NULL;
-        headers = curl_slist_append(headers, "Accept: application/json");
-        headers = curl_slist_append(headers, "Content-Type: application/json");
-        headers = curl_slist_append(headers, "charsets: utf-8");
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-        if(!token.empty()) {
-            headers = curl_slist_append(headers, (new string("Cookie: access_token=" + token))->c_str());
-        }
     }
 
     ~Connector() {
@@ -37,12 +28,18 @@ public:
 
     void init() {
         curl = curl_easy_init();
-        curl_easy_setopt(curl, CURLOPT_COOKIEFILE, "cookie.txt");
-        curl_easy_setopt(curl, CURLOPT_COOKIEJAR, "cookie.txt");
+        curl_easy_setopt(curl, CURLOPT_COOKIEFILE, "build/cookie.txt");
+        curl_easy_setopt(curl, CURLOPT_COOKIEJAR, "build/cookie.txt");
 
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
         //Debug
         curl_easy_setopt(curl, CURLOPT_VERBOSE, true);
+
+        struct curl_slist *headers = NULL;
+        headers = curl_slist_append(headers, "Accept: application/json");
+        headers = curl_slist_append(headers, "Content-Type: application/json");
+        headers = curl_slist_append(headers, "charsets: utf-8");
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     }
 
     Response postRequest(string URL, string data) {
