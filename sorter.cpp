@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
 	}
 	fclose(inputFile);
 
-	sort(&array[0], &array[n-1]);
+	sort(&array[0], &array[n]);
 
 	FILE* outputFile = fopen("outSort", "wb");
 	fwrite(&n, sizeof(int), 1, outputFile);

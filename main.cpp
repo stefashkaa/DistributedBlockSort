@@ -231,12 +231,16 @@ struct everest : actor{
 
 				while(job->state != Everest::State::DONE) {
 					job->refresh();
+					if (job->state == Everest::State::FAILED) {
+						std::cout << "The last job was failed!\n";
+						exit(1);
+					}
 				}
 				//save result
 				file->uri = job->result["outSort"];
 				fileBlocks.at(eq->sort->i) = file;
-				allJobs.push_back(job);
 
+				allJobs.push_back(job);
 				eq->done = true;
 			}
 		}
@@ -265,14 +269,19 @@ struct everest : actor{
 
 				while(job->state != Everest::State::DONE) {
 					job->refresh();
+					if (job->state == Everest::State::FAILED) {
+						std::cout << "The last job was failed!\n";
+						exit(1);
+					}
 				}
 				//save result
 				iFile->uri = job->result["outMerge1"];
 				jFile->uri = job->result["outMerge2"];
+
 				fileBlocks.at(eq->merge->i) = iFile;
 				fileBlocks.at(eq->merge->j) = jFile;
-				allJobs.push_back(job);
 
+				allJobs.push_back(job);
 				eq->done = true;
 			}
 		}
@@ -283,7 +292,9 @@ struct everest : actor{
 /*$TET$everest$$code&data*/
 	~everest() {
 		isSorted();
+		//will be removed all files in temp directory
 		everestAPI->deleteAllFiles();
+		//will be removed all jobs
 		for(Everest::Job* j : allJobs) {
 			j->remove();
 		}
@@ -331,6 +342,10 @@ struct everest : actor{
 
 		while(job->state != Everest::State::DONE) {
 			job->refresh();
+			if (job->state == Everest::State::FAILED) {
+				std::cout << "The last job was failed!\n";
+				exit(1);
+			}
 		}
 		auto answer = everestAPI->downloadFile(job->result["answer"]);
 		cout << answer << endl;
@@ -626,29 +641,6 @@ int main(int argc, char *argv[])
 		<< "BLOCK_SIZE = " << BLOCK_SIZE << endl
 		<< "OMP_NUM_PROCS = " << omp_get_num_procs() << endl;
 
-	//srand(1); for (int i = 0; i < NUM_BLOCKS*BLOCK_SIZE; i++)	block_array[i] = rand();
-
-	double time = omp_get_wtime();
-	//std::sort(&block_array[0], &block_array[NUM_BLOCKS*BLOCK_SIZE]);
-	//time = omp_get_wtime() - time;
-
-	//std::cout << "\nSequential sort time is " << time << " sec\n";
-
-	//////////////////// sequential blocksort /////////////////////
-	//srand(1); for (int i = 0; i < NUM_BLOCKS*BLOCK_SIZE; i++)	block_array[i] = rand();
-
-	//time = omp_get_wtime();
-
-	//for (int i = 0; i<NUM_BLOCKS; i++) block_sort(i);
-	//for (int i = 1; i<NUM_BLOCKS; i++) for (int j = 0; j<i; j++) block_merge(j, i);
-
-	//time = omp_get_wtime() - time;
-
-	//if (!is_sorted())std::cout << "\nSomething went wrong in the sequential block-sort!!!\n";
-	//else std::cout << "Sequential block-sort time is " << time << " sec\n";
-	///////////////////////////////////////////////////////////////
-
-	/////////////////// parallel actor blocksort //////////////////
 	omp_set_num_threads(1);
 	everest an_everest(e);
 	timer a_timer(e);
@@ -679,7 +671,7 @@ int main(int argc, char *argv[])
 	}
 	a_stoper.in(*prev);
 
-	time = omp_get_wtime();
+	double time = omp_get_wtime();
 	e.run();
 	time = omp_get_wtime() - time;
 

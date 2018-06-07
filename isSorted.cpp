@@ -32,8 +32,9 @@ int main(int argc, char *argv[])
 	}
 	int BLOCK_SIZE = 0;
 
+	FILE* inputFile;
 	for(int i = 1; i < argc; i++) {
-		FILE* inputFile = fopen(argv[i], "rb");
+		inputFile = fopen(argv[i], "rb");
 		fread(&BLOCK_SIZE, sizeof(int), 1, inputFile);
 		for(int j = 0; j < BLOCK_SIZE; j++) {
 			int element = 0;
