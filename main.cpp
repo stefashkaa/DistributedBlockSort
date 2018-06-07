@@ -23,6 +23,8 @@
 
 using namespace std;
 
+const string EVEREST_URL = "https://everest.distcomp.org";
+const string LABEL = "blocksort";
 const string USERNAME = "stefanpopov";
 const string PASSWORD = "qwaszx1";
 const string SORTER_ID = "5afc82b3140000203c6f7b75";
@@ -153,7 +155,7 @@ struct everest : actor{
 	everest(my_engine&e){
 		TEMPLET::init(this, &e, everest_recv_adapter);
 /*$TET$everest$everest*/
-		everestAPI = new Everest(USERNAME, PASSWORD, "blocksort");
+		everestAPI = new Everest(USERNAME, PASSWORD, LABEL);
 		createFiles();
 /*$TET$*/
 	}
@@ -201,7 +203,7 @@ struct everest : actor{
 				switch (eq->type) {
 					case everest_queue::SORT: eq->sort->send(); break;
 					case everest_queue::MERGE: eq->merge->send(); break;
-					default: std::cout << "unknown task type\n";
+					default: cout << "unknown task type" << endl;
 				}
 				delete eq;
 				it = queue.erase(it);
@@ -232,7 +234,7 @@ struct everest : actor{
 				while(job->state != Everest::State::DONE) {
 					job->refresh();
 					if (job->state == Everest::State::FAILED) {
-						std::cout << "The last job was failed!\n";
+						cout << "The last job was failed!" << endl;
 						exit(1);
 					}
 				}
@@ -264,13 +266,15 @@ struct everest : actor{
 
 				inputs["file1"] = iFile->uri;
 				inputs["file2"] = jFile->uri;
+				inputs["i"] = to_string(eq->merge->i);
+				inputs["j"] = to_string(eq->merge->j);
 
 				auto job = everestAPI->runJob(MERGER_ID, "merger", inputs);
 
 				while(job->state != Everest::State::DONE) {
 					job->refresh();
 					if (job->state == Everest::State::FAILED) {
-						std::cout << "The last job was failed!\n";
+						cout << "The last job was failed!" << endl;
 						exit(1);
 					}
 				}
@@ -292,6 +296,7 @@ struct everest : actor{
 /*$TET$everest$$code&data*/
 	~everest() {
 		isSorted();
+		printResult();
 		//will be removed all files in temp directory
 		everestAPI->deleteAllFiles();
 		//will be removed all jobs
@@ -299,7 +304,7 @@ struct everest : actor{
 			j->remove();
 		}
 		everestAPI->removeAccessToken();
-		std::cout << "\n Everest clean-up \n";
+		cout << endl << "Everest clean-up" << endl;
 		vector<Everest::File*>().swap(fileBlocks);
 	}
 
@@ -343,12 +348,20 @@ struct everest : actor{
 		while(job->state != Everest::State::DONE) {
 			job->refresh();
 			if (job->state == Everest::State::FAILED) {
-				std::cout << "The last job was failed!\n";
+				cout << "The last job was failed!" << endl;
 				exit(1);
 			}
 		}
 		auto answer = everestAPI->downloadFile(job->result["answer"]);
-		cout << answer << endl;
+		cout << endl << answer << endl;
+	}
+
+	void printResult() {
+		cout << endl << "Array blocks available at following links:" << endl;
+		for(int i = 0; i < (int)fileBlocks.size(); i++) {
+			auto file = fileBlocks.at(i);
+			cout << EVEREST_URL << file->uri << endl;
+		}
 	}
 /*$TET$*/
 };
@@ -581,9 +594,6 @@ struct merger : actor{
 			e.i = j; // request to the service for merging blocks e.i and e.j
 			e.j = _in->i;
 			e.send();
-			//block_merge(j,_in->i);
-			//out.i = _in->i;
-			//_in->send();out.send();
 		}
 	}
 
@@ -637,7 +647,7 @@ int main(int argc, char *argv[])
 
 	system("uname -a");
 
-	std::cout << "\nNUM_BLOCKS = " << NUM_BLOCKS << endl
+	cout << endl << "NUM_BLOCKS = " << NUM_BLOCKS << endl
 		<< "BLOCK_SIZE = " << BLOCK_SIZE << endl
 		<< "OMP_NUM_PROCS = " << omp_get_num_procs() << endl;
 
@@ -675,7 +685,7 @@ int main(int argc, char *argv[])
 	e.run();
 	time = omp_get_wtime() - time;
 
-	std::cout << "\nParallel block-sort time is " << time << " sec\n";
+	cout << endl << "Block-sort time is " << time << " sec" << endl;
 
 	return 0;
 

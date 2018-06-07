@@ -4,6 +4,7 @@
 #include <iostream>
 #include <algorithm>
 #include <stdlib.h>
+#include <string>
 
 using namespace std;
 
@@ -17,6 +18,7 @@ int main(int argc, char *argv[])
 	int BLOCK_SIZE = 0, BOTH_SIZE = 0;
 	//reading both blocks
 	FILE* inputFile = fopen("file1", "rb");
+
 	if(!inputFile) {
 		cerr << "Empty first file!" << endl;
 		return -2;
@@ -29,6 +31,7 @@ int main(int argc, char *argv[])
 	fclose(inputFile);
 
 	inputFile = fopen("file2", "rb");
+
 	if(!inputFile) {
 		cerr << "Empty second file!" << endl;
 		return -2;
@@ -45,7 +48,7 @@ int main(int argc, char *argv[])
 	int* tmp_array = (int*)malloc(sizeof(int)*(2 * BLOCK_SIZE));
 
 	if (!tmp_array) {
-		std::cout << "Memory allocation failed!!!\n";
+		cout << "Memory allocation failed!!!" << endl;
 		exit(1);
 	}
 
@@ -56,18 +59,23 @@ int main(int argc, char *argv[])
 	std::copy(&tmp_array[BLOCK_SIZE], &tmp_array[2 * BLOCK_SIZE], &block_array[BLOCK_SIZE]);
 
 	free(tmp_array);
-	//writing both blocks
-	FILE* outputFile = fopen("outMerge1", "wb");
+	//writing both blocks into files
+	string iString = argv[3];
+	string jString = argv[4];
+
+	FILE* outputFile = fopen(("outMerge1-" + iString).c_str(), "wb");
 	fwrite(&BLOCK_SIZE, sizeof(int), 1, outputFile);
 	for(int i = 0; i < BLOCK_SIZE; i++) {
 		fwrite(&block_array[i], sizeof(int), 1, outputFile);
 	}
 	fclose(outputFile);
-	outputFile = fopen("outMerge2", "wb");
+
+	outputFile = fopen(("outMerge2-" + jString).c_str(), "wb");
 	fwrite(&BLOCK_SIZE, sizeof(int), 1, outputFile);
 	for(int i = BLOCK_SIZE; i < n; i++) {
 		fwrite(&block_array[i], sizeof(int), 1, outputFile);
 	}
 	fclose(outputFile);
+
 	return 0;
 }

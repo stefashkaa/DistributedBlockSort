@@ -14,8 +14,9 @@ int main(int argc, char *argv[])
 		cerr << "Empty parameters!" << endl;
 		return -1;
 	}
-
+	//reading block
 	FILE* inputFile = fopen(argv[1], "rb");
+
 	if(!inputFile) {
 		cerr << "Empty file!" << endl;
 		return -2;
@@ -28,9 +29,10 @@ int main(int argc, char *argv[])
 		fread(&array[i], sizeof(int), 1, inputFile);
 	}
 	fclose(inputFile);
-
+	delete(inputFile);
+	//sorting block
 	sort(&array[0], &array[n]);
-
+	//writing block into file
 	FILE* outputFile = fopen("outSort", "wb");
 	fwrite(&n, sizeof(int), 1, outputFile);
 
@@ -38,5 +40,6 @@ int main(int argc, char *argv[])
 		fwrite(&array[i], sizeof(int), 1, outputFile);
 	}
 	fclose(outputFile);
+
 	return 0;
 }
