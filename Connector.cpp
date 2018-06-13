@@ -33,7 +33,7 @@ public:
 
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
         //Debug
-        curl_easy_setopt(curl, CURLOPT_VERBOSE, true);
+        //curl_easy_setopt(curl, CURLOPT_VERBOSE, true);
 
         struct curl_slist *headers = NULL;
         headers = curl_slist_append(headers, "Accept: application/json");

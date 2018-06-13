@@ -4,7 +4,8 @@
 #include <iostream>
 #include <algorithm>
 #include <stdlib.h>
-#include <string>
+#include <cstring>
+#include <vector>
 
 using namespace std;
 
@@ -25,9 +26,13 @@ int main(int argc, char *argv[])
 	}
 	fread(&BLOCK_SIZE, sizeof(int), 1, inputFile);
 	int n = BLOCK_SIZE*2;
-	int array1[BLOCK_SIZE], array2[BLOCK_SIZE], block_array[n];
+	vector<int> block_array(n);
 
-	fread(&array1, sizeof(int), BLOCK_SIZE, inputFile);
+	for(int i = 0; i < BLOCK_SIZE; i++) {
+		int value;
+		fread(&value, sizeof(int), 1, inputFile);
+		block_array[i] = value;
+	}
 	fclose(inputFile);
 
 	inputFile = fopen("file2", "rb");
@@ -41,7 +46,11 @@ int main(int argc, char *argv[])
 		cerr << "Block size doesn't equal!" << endl;
 		return -3;
 	}
-	fread(&array2, sizeof(int), BLOCK_SIZE, inputFile);
+	for(int i = BLOCK_SIZE; i < n; i++) {
+		int value;
+		fread(&value, sizeof(int), 1, inputFile);
+		block_array[i] = value;
+	}
 	fclose(inputFile);
 	delete(inputFile);
 	//merging blocks
@@ -52,25 +61,26 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	std::merge(&array1[0], &array1[BLOCK_SIZE],
-		&array2[0], &array2[BLOCK_SIZE],
+	std::merge(&block_array[0], &block_array[BLOCK_SIZE],
+		&block_array[BLOCK_SIZE], &block_array[n],
 		&tmp_array[0]);
 	std::copy(&tmp_array[0], &tmp_array[BLOCK_SIZE], &block_array[0]);
-	std::copy(&tmp_array[BLOCK_SIZE], &tmp_array[2 * BLOCK_SIZE], &block_array[BLOCK_SIZE]);
+	std::copy(&tmp_array[BLOCK_SIZE], &tmp_array[n], &block_array[BLOCK_SIZE]);
 
 	free(tmp_array);
 	//writing both blocks into files
-	string iString = argv[3];
-	string jString = argv[4];
+	char *iString = strdup("outMerge1-"), *jString = strdup("outMerge2-");
+	strcat(iString, argv[3]);
+	strcat(jString, argv[4]);
 
-	FILE* outputFile = fopen(("outMerge1-" + iString).c_str(), "wb");
+	FILE* outputFile = fopen(iString, "wb");
 	fwrite(&BLOCK_SIZE, sizeof(int), 1, outputFile);
 	for(int i = 0; i < BLOCK_SIZE; i++) {
 		fwrite(&block_array[i], sizeof(int), 1, outputFile);
 	}
 	fclose(outputFile);
 
-	outputFile = fopen(("outMerge2-" + jString).c_str(), "wb");
+	outputFile = fopen(jString, "wb");
 	fwrite(&BLOCK_SIZE, sizeof(int), 1, outputFile);
 	for(int i = BLOCK_SIZE; i < n; i++) {
 		fwrite(&block_array[i], sizeof(int), 1, outputFile);

@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
 	}
 	int n;
 	fread(&n, sizeof(int), 1, inputFile);
-	int array[n];
+	int* array = new int[n];
 
 	for(int i = 0; i < n; i++) {
 		fread(&array[i], sizeof(int), 1, inputFile);
