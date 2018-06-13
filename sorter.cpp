@@ -4,6 +4,7 @@
 #include <iostream>
 #include <algorithm>
 #include <stdlib.h>
+#include <vector>
 
 using namespace std;
 
@@ -23,7 +24,7 @@ int main(int argc, char *argv[])
 	}
 	int n;
 	fread(&n, sizeof(int), 1, inputFile);
-	int* array = new int[n];
+	vector<int> array(n);
 
 	for(int i = 0; i < n; i++) {
 		fread(&array[i], sizeof(int), 1, inputFile);

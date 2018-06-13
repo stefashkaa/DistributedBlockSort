@@ -54,12 +54,7 @@ int main(int argc, char *argv[])
 	fclose(inputFile);
 	delete(inputFile);
 	//merging blocks
-	int* tmp_array = (int*)malloc(sizeof(int)*(2 * BLOCK_SIZE));
-
-	if (!tmp_array) {
-		cout << "Memory allocation failed!!!" << endl;
-		exit(1);
-	}
+	vector<int> tmp_array(n);
 
 	std::merge(&block_array[0], &block_array[BLOCK_SIZE],
 		&block_array[BLOCK_SIZE], &block_array[n],
@@ -67,7 +62,7 @@ int main(int argc, char *argv[])
 	std::copy(&tmp_array[0], &tmp_array[BLOCK_SIZE], &block_array[0]);
 	std::copy(&tmp_array[BLOCK_SIZE], &tmp_array[n], &block_array[BLOCK_SIZE]);
 
-	free(tmp_array);
+	vector<int>().swap(tmp_array);
 	//writing both blocks into files
 	char *iString = strdup("outMerge1-"), *jString = strdup("outMerge2-");
 	strcat(iString, argv[3]);
